@@ -29,7 +29,8 @@ RUN apt-get update \
         unzip \
         zip \
         gnupg \
-        python3-venv
+        python3-venv \
+        postgresql-client
 
 ENV AZ_VERSION 2.13.0-1~bionic
 
