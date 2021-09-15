@@ -30,7 +30,8 @@ RUN apt-get update \
         zip \
         gnupg \
         python3-venv \
-        postgresql-client
+        postgresql-client \
+        swaks
 
 ENV AZ_VERSION 2.13.0-1~bionic
 
