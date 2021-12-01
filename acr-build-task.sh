@@ -10,7 +10,6 @@ az acr task create \
     --name $PROJECT_NAME \
     --image hmcts/$PROJECT_NAME:prod-{{.Run.Commit}}-{{.Run.Date}} \
     --context https://github.com/$GIT_USER/$PROJECT_NAME.git \
-    --branch master \
     --file Dockerfile \
     --git-access-token $GIT_PAT \
     --subscription DCD-CNP-PROD
