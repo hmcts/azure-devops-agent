@@ -8,12 +8,8 @@ RUN echo "APT::Get::Assume-Yes \"true\";" > /etc/apt/apt.conf.d/90assumeyes
 # Add SQLPackage URL
 ARG SQLPACKAGE_URL=https://go.microsoft.com/fwlink/?linkid=2143497
 
-# Add Ansible  PPA
-RUN add-apt-repository --yes --update ppa:ansible/ansible
-
 RUN apt-get update \
 && apt-get install -y --no-install-recommends \
-        ansible \
         ca-certificates \
         curl \
         jq \
@@ -88,6 +84,10 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - > /de
     && ACCEPT_EULA=Y apt-get install mssql-tools unixodbc-dev \
     && ln -s /opt/mssql-tools/bin/sqlcmd /usr/bin/sqlcmd \
     && ln -s /opt/mssql-tools/bin/bcp /usr/bin/bcp
+
+# Install Ansible
+RUN add-apt-repository --yes --update ppa:ansible/ansible \
+  && apt-get install -y ansible
 
 WORKDIR /azp
 
