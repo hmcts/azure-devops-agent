@@ -8,8 +8,12 @@ RUN echo "APT::Get::Assume-Yes \"true\";" > /etc/apt/apt.conf.d/90assumeyes
 # Add SQLPackage URL
 ARG SQLPACKAGE_URL=https://go.microsoft.com/fwlink/?linkid=2143497
 
+# Add Ansible  PPA
+RUN add-apt-repository --yes --update ppa:ansible/ansible
+
 RUN apt-get update \
 && apt-get install -y --no-install-recommends \
+        ansible \
         ca-certificates \
         curl \
         jq \
