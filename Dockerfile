@@ -33,7 +33,7 @@ RUN apt-get update \
         postgresql-client \
         swaks
 
-ENV AZ_VERSION 2.13.0-1~bionic
+ENV AZ_VERSION 2.42.0-1~bionic
 
 # Install Azure CLI
 RUN rm -rf /var/lib/apt/lists/* \
