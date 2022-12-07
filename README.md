@@ -3,8 +3,8 @@
 To bump the version of AZURECLI make the following changes:
 
 ## 1. Edit vsts-agent/Dockerfile
-- Open the dockerfile and navigate to line 36, 'ENV AZ_VERSION x.xx.x-1~bionic'
-- Raise a PR to patch to the latest version (or most recent version you're confident patching to)
+- Open the dockerfile and apply the relevant changes
+- Raise a PR to be merged
 
 ## 2. Run the build task from local
 - After the PR gets merged, run the script vsts-agent/blob/master/acr-build-task.sh from local
