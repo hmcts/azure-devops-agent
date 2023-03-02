@@ -1,6 +1,6 @@
 .DEFAULT=build
 
-IMAGE=hmcts/vsts-agent
+IMAGE=azure-devops-agent
 
 build:
 	docker build -t ${IMAGE} .

@@ -1,0 +1,38 @@
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+name: Publish
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Generate build ID
+        id: prep
+        run: |
+          sha=${GITHUB_SHA::8}
+          ts=$(date +%s)
+          echo "::set-output name=BUILD_ID::${sha}-${ts}"
+
+      - name: 'Build and push image'
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+      - run: |
+          docker build . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/azure-devops-agent:pr-${{github.event.number}}-${{ steps.prep.outputs.BUILD_ID }}
+          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/azure-devops-agent:pr-${{github.event.number}}-${{ steps.prep.outputs.BUILD_ID }}
+        if: startsWith(github.ref, 'refs/pull')
+      - run: |
+          docker build . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/azure-devops-agent:prod-${{ steps.prep.outputs.BUILD_ID }}
+          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/azure-devops-agent:prod-${{ steps.prep.outputs.BUILD_ID }}
+        if: github.ref == 'refs/heads/main'
