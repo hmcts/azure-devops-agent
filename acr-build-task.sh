@@ -1,7 +1,7 @@
 #!/bin/sh
 
 ACR_NAME=hmctspublic  # The name of your Azure container registry
-PROJECT_NAME=vsts-agent
+PROJECT_NAME=azure-devops-agent
 GIT_USER=hmcts  # Your GitHub user account name
 GIT_PAT=$(az keyvault secret show --vault-name infra-vault-prod --name hmcts-github-apikey --query value -o tsv)
 
