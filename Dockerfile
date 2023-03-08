@@ -34,7 +34,8 @@ RUN apt-get update \
         swaks \
         python3-pip \
         python3-venv \
-        python3-requests
+        python3-requests \
+        python3-packaging
 
 ENV AZ_VERSION 2.42.0-1~bionic
 
