@@ -57,6 +57,9 @@ RUN rm -rf /var/lib/apt/lists/* \
   && rm -rf /var/lib/apt/lists/* \
   && rm -rf /etc/apt/sources.list.d/*
 
+# Install Azure CLI storage extension
+RUN az extension add --name storage-preview
+
 # Install Java OpenJDKs
 RUN apt-add-repository -y ppa:openjdk-r/ppa \
   && apt-get update \
