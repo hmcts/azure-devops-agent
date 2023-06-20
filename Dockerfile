@@ -37,7 +37,7 @@ RUN apt-get update \
         python3-venv \
         python3-requests \
         python3-packaging \
-        util-linux
+        bsdmainutils
 
 ENV AZ_VERSION 2.42.0-1~bionic
 
