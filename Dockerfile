@@ -7,6 +7,7 @@ RUN echo "APT::Get::Assume-Yes \"true\";" > /etc/apt/apt.conf.d/90assumeyes
 
 # Add SQLPackage URL
 ARG SQLPACKAGE_URL=https://go.microsoft.com/fwlink/?linkid=2143497
+ARG YQ_VERSION=v4.34.1
 
 RUN apt-get update \
 && apt-get install -y --no-install-recommends \
@@ -35,7 +36,8 @@ RUN apt-get update \
         python3-pip \
         python3-venv \
         python3-requests \
-        python3-packaging
+        python3-packaging \
+        bsdmainutils
 
 ENV AZ_VERSION 2.42.0-1~bionic
 
@@ -97,6 +99,8 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - > /de
 # Install Ansible
 RUN add-apt-repository --yes --update ppa:ansible/ansible \
   && apt-get install -y ansible
+
+RUN wget https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64.tar.gz -O - | tar xz && mv yq_linux_amd64 /usr/bin/yq
 
 WORKDIR /azp
 
