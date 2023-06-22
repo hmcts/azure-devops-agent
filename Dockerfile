@@ -5,8 +5,6 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 RUN echo "APT::Get::Assume-Yes \"true\";" > /etc/apt/apt.conf.d/90assumeyes
 
-# Add SQLPackage URL
-ARG SQLPACKAGE_URL=https://go.microsoft.com/fwlink/?linkid=2143497
 
 RUN apt-get update \
 && apt-get install -y --no-install-recommends \
@@ -80,6 +78,7 @@ RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - > /d
   && apt-get install -y docker-ce
 
 # Install SQLPackage
+ARG SQLPACKAGE_URL=https://go.microsoft.com/fwlink/?linkid=2143497
 RUN mkdir /opt/sqlpackage \
     && wget -O sqlpackage-linux.zip ${SQLPACKAGE_URL} \
     && unzip sqlpackage-linux.zip -d /opt/sqlpackage \
