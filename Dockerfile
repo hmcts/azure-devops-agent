@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:22.04
 
 # To make it easier for build and release pipelines to run apt-get,
 # configure apt to not require confirmation (assume the -y argument by default)
@@ -7,7 +7,6 @@ RUN echo "APT::Get::Assume-Yes \"true\";" > /etc/apt/apt.conf.d/90assumeyes
 
 # Add SQLPackage URL
 ARG SQLPACKAGE_URL=https://go.microsoft.com/fwlink/?linkid=2143497
-ARG YQ_VERSION=v4.34.1
 
 RUN apt-get update \
 && apt-get install -y --no-install-recommends \
@@ -17,7 +16,6 @@ RUN apt-get update \
         git \
         iputils-ping \
         libcurl4 \
-        libicu60 \
         libunwind8 \
         lsb-release \
         make \
@@ -39,7 +37,7 @@ RUN apt-get update \
         python3-packaging \
         bsdmainutils
 
-ENV AZ_VERSION 2.42.0-1~bionic
+ENV AZ_VERSION 2.49.0-1~jammy
 
 # Install Azure CLI
 RUN rm -rf /var/lib/apt/lists/* \
@@ -54,7 +52,7 @@ RUN rm -rf /var/lib/apt/lists/* \
   && apt-get update \
   && apt-get install -y --no-install-recommends \
        azure-cli=$AZ_VERSION \
-  && curl -sL https://deb.nodesource.com/setup_10.x | bash - \
+  && curl -sL https://deb.nodesource.com/setup_20.x | bash - \
   && apt-get install -y nodejs \
   && rm -rf /var/lib/apt/lists/* \
   && rm -rf /etc/apt/sources.list.d/*
@@ -68,7 +66,7 @@ RUN apt-add-repository -y ppa:openjdk-r/ppa \
   && apt-get install -y --no-install-recommends openjdk-11-jdk \
   && apt-get install -y --no-install-recommends openjdk-17-jdk \
   && rm -rf /var/lib/apt/lists/* \
-  && update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
+  && update-alternatives --set java /usr/lib/jvm/java-17-openjdk-amd64/bin/java
 
 ENV JAVA_HOME_11_X64=/usr/lib/jvm/java-11-openjdk-amd64 \
     JAVA_HOME_17_X64=/usr/lib/jvm/java-17-openjdk-amd64 \
@@ -90,7 +88,7 @@ RUN mkdir /opt/sqlpackage \
 
 # Install MSSQL Tools
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - > /dev/null \
-    && curl https://packages.microsoft.com/config/ubuntu/18.04/prod.list | tee /etc/apt/sources.list.d/msprod.list \
+    && curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list | tee /etc/apt/sources.list.d/msprod.list \
     && apt-get update \
     && ACCEPT_EULA=Y apt-get install mssql-tools unixodbc-dev \
     && ln -s /opt/mssql-tools/bin/sqlcmd /usr/bin/sqlcmd \
@@ -100,6 +98,7 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - > /de
 RUN add-apt-repository --yes --update ppa:ansible/ansible \
   && apt-get install -y ansible
 
+ARG YQ_VERSION=v4.34.1
 RUN wget https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64.tar.gz -O - | tar xz && mv yq_linux_amd64 /usr/bin/yq
 
 WORKDIR /azp
