@@ -100,6 +100,12 @@ RUN add-apt-repository --yes --update ppa:ansible/ansible \
 ARG YQ_VERSION=v4.34.1
 RUN wget https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64.tar.gz -O - | tar xz && mv yq_linux_amd64 /usr/bin/yq
 
+# Install kubectl
+RUN curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+RUN echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | tee /etc/apt/sources.list.d/kubernetes.list
+RUN apt update
+RUN apt install kubectl -y
+
 WORKDIR /azp
 
 COPY ./start.sh .
