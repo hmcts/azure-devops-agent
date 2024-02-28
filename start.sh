@@ -1,10 +1,7 @@
 #!/bin/bash
 set -e
 
-# Create env variable to support PAT retrieval from key vault mount
-if [ -f "/kvmnt/azure-devops-agent-token" ]; then
-  export AZP_TOKEN=$(cat /kvmnt/azure-devops-agent-token)
-fi
+AZP_TOKEN=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "client_id=10936009-a112-4733-bb2a-94ee240b79ff&scope=499b84ac-1321-427f-aa17-267ca6975798/.default&client_secret=$AZP_TOKEN&grant_type=client_credentials" "https://login.microsoftonline.com/531ff96d-0ae9-462a-8d2d-bec7c0b42082/oauth2/v2.0/token" | jq -r '.access_token')
 
 if [ -z "$AZP_URL" ]; then
   echo 1>&2 "error: missing AZP_URL environment variable"
