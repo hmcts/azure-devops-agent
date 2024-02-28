@@ -1,10 +1,7 @@
 #!/bin/bash
 set -e
 
-# Create env variable to support PAT retrieval from key vault mount
-if [ -f "/kvmnt/azure-devops-agent-token" ]; then
-  export AZP_TOKEN=$(cat /kvmnt/azure-devops-agent-token)
-fi
+AZP_TOKEN2=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "client_id=10936009-a112-4733-bb2a-94ee240b79ff&scope=499b84ac-1321-427f-aa17-267ca6975798/.default&client_secret=$AZP_TOKEN&grant_type=client_credentials" "https://login.microsoftonline.com/531ff96d-0ae9-462a-8d2d-bec7c0b42082/oauth2/v2.0/token" | jq -r '.access_token')
 
 if [ -z "$AZP_URL" ]; then
   echo 1>&2 "error: missing AZP_URL environment variable"
@@ -12,16 +9,16 @@ if [ -z "$AZP_URL" ]; then
 fi
 
 if [ -z "$AZP_TOKEN_FILE" ]; then
-  if [ -z "$AZP_TOKEN" ]; then
-    echo 1>&2 "error: missing AZP_TOKEN environment variable"
+  if [ -z "$AZP_TOKEN2" ]; then
+    echo 1>&2 "error: missing AZP_TOKEN2 environment variable"
     exit 1
   fi
 
   AZP_TOKEN_FILE=/azp/.token
-  echo -n $AZP_TOKEN > "$AZP_TOKEN_FILE"
+  echo -n $AZP_TOKEN2 > "$AZP_TOKEN_FILE"
 fi
 
-unset AZP_TOKEN
+unset AZP_TOKEN2
 
 if [ -n "$AZP_WORK" ]; then
   mkdir -p "$AZP_WORK"
@@ -54,7 +51,7 @@ print_header() {
 }
 
 # Let the agent ignore the token env variables
-export VSO_AGENT_IGNORE=AZP_TOKEN,AZP_TOKEN_FILE
+export VSO_AGENT_IGNORE=AZP_TOKEN2,AZP_TOKEN_FILE
 
 print_header "1. Determining matching Azure Pipelines agent..."
 
