@@ -3,7 +3,7 @@ set -e
 
 # Create env variable to support SP token retrieval from secret
 if [ -f "/kvmnt/azure-devops-agent-token" ]; then
-  export AZP_TOKEN=$(cat /kvmnt/azure-devops-agent-token)
+  export AZP_TOKEN=$(cat /kvmnt/azure-devops-sp-token)
 fi
 
 if [ -z "$AZP_URL" ]; then
