@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# Create env variable to support PAT retrieval from key vault mount
+# Create env variable to support SP token retrieval from secret
 if [ -f "/kvmnt/azure-devops-agent-token" ]; then
   export AZP_TOKEN=$(cat /kvmnt/azure-devops-agent-token)
 fi
@@ -16,8 +16,8 @@ if [ -z "$AZP_TOKEN_FILE" ]; then
     echo 1>&2 "error: missing AZP_TOKEN environment variable"
     exit 1
   fi
-  
-  AZP_TOKEN_FILE=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "client_id=10936009-a112-4733-bb2a-94ee240b79ff&scope=499b84ac-1321-427f-aa17-267ca6975798/.default&client_secret=$AZP_TOKEN&grant_type=client_credentials" "https://login.microsoftonline.com/531ff96d-0ae9-462a-8d2d-bec7c0b42082/oauth2/v2.0/token" | jq -r '.access_token')
+
+  AZP_TOKEN_FILE=/azp/.token
   echo -n $AZP_TOKEN > "$AZP_TOKEN_FILE"
 fi
 
@@ -59,7 +59,7 @@ export VSO_AGENT_IGNORE=AZP_TOKEN,AZP_TOKEN_FILE
 print_header "1. Determining matching Azure Pipelines agent..."
 
 AZP_AGENT_PACKAGES=$(curl -LsS \
-    -u user:$(cat "$AZP_TOKEN_FILE") \
+    -H "Authorization: Bearer $(cat "$AZP_TOKEN_FILE")" \
     -H 'Accept:application/json;' \
     "$AZP_URL/_apis/distributedtask/packages/agent?platform=linux-x64&top=1")
 
