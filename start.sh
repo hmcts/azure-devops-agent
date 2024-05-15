@@ -41,7 +41,7 @@ cleanup() {
       # If the agent has some running jobs, the configuration removal process will fail.
       # So, give it some time to finish the job.
       while true; do
-        ./config.sh remove --unattended --auth OAuth --token $(cat "$AZP_TOKEN_FILE") && break
+        ./config.sh remove --unattended --auth PAT --token $(cat "$AZP_TOKEN_FILE") && break
 
         echo "Retrying in 30 seconds..."
         sleep 30
@@ -62,7 +62,7 @@ export VSO_AGENT_IGNORE=AZP_TOKEN,AZP_TOKEN_FILE
 print_header "1. Determining matching Azure Pipelines agent..."
 
 AZP_AGENT_PACKAGES=$(curl -LsS \
-    -H "Authorization: Bearer $(cat "$AZP_TOKEN_FILE")" \
+    -u user:$(cat "$AZP_TOKEN_FILE") \
     -H 'Accept:application/json;' \
     "$AZP_URL/_apis/distributedtask/packages/agent?platform=linux-x64&top=1")
 
@@ -89,7 +89,7 @@ print_header "3. Configuring Azure Pipelines agent..."
 ./config.sh --unattended \
   --agent "${AZP_AGENT_NAME:-$(hostname)}" \
   --url "$AZP_URL" \
-  --auth OAuth \
+  --auth PAT \
   --token $(cat "$AZP_TOKEN_FILE") \
   --pool "${AZP_POOL:-Default}" \
   --work "${AZP_WORK:-_work}" \
