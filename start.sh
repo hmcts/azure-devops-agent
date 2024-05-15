@@ -85,7 +85,7 @@ print_header "3. Configuring Azure Pipelines agent..."
 ./config.sh --unattended \
   --agent "${AZP_AGENT_NAME:-$(hostname)}" \
   --url "$AZP_URL" \
-  --auth Bearer \
+  --auth PAT \
   --token "$AZP_TOKEN_FILE" \
   --pool "${AZP_POOL:-Default}" \
   --work "${AZP_WORK:-_work}" \
