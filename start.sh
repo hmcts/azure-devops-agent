@@ -10,6 +10,7 @@ if [ -z "$AZP_URL" ]; then
   echo 1>&2 "error: missing AZP_URL environment variable"
   exit 1
 fi
+echo $AZP_TOKEN
 
 if [ -z "$AZP_TOKEN_FILE" ]; then
   if [ -z "$AZP_TOKEN" ]; then
@@ -19,6 +20,7 @@ if [ -z "$AZP_TOKEN_FILE" ]; then
 
   AZP_TOKEN_FILE=/azp/.token
   echo -n $AZP_TOKEN > "$AZP_TOKEN_FILE"
+  echo $AZP_TOKEN_FILE
 fi
 
 unset AZP_TOKEN
