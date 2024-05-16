@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+az login --service-principal -u "10936009-a112-4733-bb2a-94ee240b79ff" -p "$AZP_TOKEN" --tenant "531ff96d-0ae9-462a-8d2d-bec7c0b42082" --allow-no-subscriptions
+
+# Obtain an access token using the Azure CLI
+TOKEN=$(az account get-access-token --resource 499b84ac-1321-427f-aa17-267ca6975798 --query accessToken -o tsv)
+
 # Create env variable to support PAT retrieval from key vault mount
 if [ -f "/kvmnt/azure-devops-agent-token" ]; then
   export AZP_TOKEN=$(cat /kvmnt/azure-devops-agent-token)
@@ -10,18 +15,15 @@ if [ -z "$AZP_URL" ]; then
   echo 1>&2 "error: missing AZP_URL environment variable"
   exit 1
 fi
-echo $AZP_TOKEN
 
 if [ -z "$AZP_TOKEN_FILE" ]; then
   if [ -z "$AZP_TOKEN" ]; then
     echo 1>&2 "error: missing AZP_TOKEN environment variable"
     exit 1
   fi
-  TOKEN=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "client_id=10936009-a112-4733-bb2a-94ee240b79ff&scope=499b84ac-1321-427f-aa17-267ca6975798/.default&client_secret=$AZP_TOKEN&grant_type=client_credentials" "https://login.microsoftonline.com/531ff96d-0ae9-462a-8d2d-bec7c0b42082/oauth2/v2.0/token" | jq -r '.access_token')
-  echo $TOKEN
+
   AZP_TOKEN_FILE=/azp/.token
-  echo $TOKEN > "$AZP_TOKEN_FILE"
-  echo $AZP_TOKEN_FILE
+  echo -n "$TOKEN" > "$AZP_TOKEN_FILE"
 fi
 
 unset AZP_TOKEN
@@ -41,7 +43,7 @@ cleanup() {
       # If the agent has some running jobs, the configuration removal process will fail.
       # So, give it some time to finish the job.
       while true; do
-        ./config.sh remove --unattended --auth PAT --token $(cat "$AZP_TOKEN_FILE") && break
+        ./config.sh remove --unattended --auth PAT --token "$(cat "$AZP_TOKEN_FILE")" && break
 
         echo "Retrying in 30 seconds..."
         sleep 30
@@ -62,7 +64,7 @@ export VSO_AGENT_IGNORE=AZP_TOKEN,AZP_TOKEN_FILE
 print_header "1. Determining matching Azure Pipelines agent..."
 
 AZP_AGENT_PACKAGES=$(curl -LsS \
-    -u user:$(cat "$AZP_TOKEN_FILE") \
+    -u user:"$TOKEN" \
     -H 'Accept:application/json;' \
     "$AZP_URL/_apis/distributedtask/packages/agent?platform=linux-x64&top=1")
 
@@ -76,7 +78,7 @@ fi
 
 print_header "2. Downloading and extracting Azure Pipelines agent..."
 
-curl -LsS $AZP_AGENT_PACKAGE_LATEST_URL | tar -xz & wait $!
+curl -LsS "$AZP_AGENT_PACKAGE_LATEST_URL" | tar -xz & wait $!
 
 source ./env.sh
 
@@ -90,7 +92,7 @@ print_header "3. Configuring Azure Pipelines agent..."
   --agent "${AZP_AGENT_NAME:-$(hostname)}" \
   --url "$AZP_URL" \
   --auth PAT \
-  --token $(cat "$AZP_TOKEN_FILE") \
+  --token "$(cat "$AZP_TOKEN_FILE")" \
   --pool "${AZP_POOL:-Default}" \
   --work "${AZP_WORK:-_work}" \
   --replace \
