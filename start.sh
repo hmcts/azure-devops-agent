@@ -43,7 +43,7 @@ cleanup() {
       # If the agent has some running jobs, the configuration removal process will fail.
       # So, give it some time to finish the job.
       while true; do
-        ./config.sh remove --unattended --auth PAT --token "$(cat "$AZP_TOKEN_FILE")" && break
+        ./config.sh remove --unattended --auth PAT --token $(cat "$AZP_TOKEN_FILE") && break
 
         echo "Retrying in 30 seconds..."
         sleep 30
@@ -78,7 +78,7 @@ fi
 
 print_header "2. Downloading and extracting Azure Pipelines agent..."
 
-curl -LsS "$AZP_AGENT_PACKAGE_LATEST_URL" | tar -xz & wait $!
+curl -LsS $AZP_AGENT_PACKAGE_LATEST_URL | tar -xz & wait $!
 
 source ./env.sh
 
@@ -92,7 +92,7 @@ print_header "3. Configuring Azure Pipelines agent..."
   --agent "${AZP_AGENT_NAME:-$(hostname)}" \
   --url "$AZP_URL" \
   --auth PAT \
-  --token "$(cat "$AZP_TOKEN_FILE")" \
+  --token $(cat "$AZP_TOKEN_FILE") \
   --pool "${AZP_POOL:-Default}" \
   --work "${AZP_WORK:-_work}" \
   --replace \
