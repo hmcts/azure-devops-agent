@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -e -x
 
 az login --service-principal -u "10936009-a112-4733-bb2a-94ee240b79ff" -p "$AZP_TOKEN" --tenant "531ff96d-0ae9-462a-8d2d-bec7c0b42082" --allow-no-subscriptions
 
