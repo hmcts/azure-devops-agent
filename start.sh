@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e -x
 
-DECODED_AZP_TOKEN=$(echo "$AZP_TOKEN" | base64 -d)
+DECODED_AZP_TOKEN=$(echo "$AZP_TOKEN" | base64 --decode)
 
 az login --service-principal -u "10936009-a112-4733-bb2a-94ee240b79ff" -p "$DECODED_AZP_TOKEN" --tenant "531ff96d-0ae9-462a-8d2d-bec7c0b42082" --allow-no-subscriptions
 
