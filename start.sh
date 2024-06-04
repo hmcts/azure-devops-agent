@@ -1,7 +1,9 @@
 #!/bin/bash
 set -e -x
 
-az login --service-principal -u "10936009-a112-4733-bb2a-94ee240b79ff" -p $AZP_TOKEN --tenant "531ff96d-0ae9-462a-8d2d-bec7c0b42082" --allow-no-subscriptions
+SP_SECRET=$(az keyvault secret show --vault-name infra-vault-sandbox --name azure-devops-sp-token --query value -o tsv)
+
+az login --service-principal -u "10936009-a112-4733-bb2a-94ee240b79ff" -p $SP_SECRET --tenant "531ff96d-0ae9-462a-8d2d-bec7c0b42082" --allow-no-subscriptions
 
 # Obtain an access token using the Azure CLI
 TOKEN=$(az account get-access-token --resource 499b84ac-1321-427f-aa17-267ca6975798 --query accessToken -o tsv)
