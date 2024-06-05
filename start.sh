@@ -2,7 +2,6 @@
 set -e -x
 
 az login --federated-token "$(cat /var/run/secrets/azure/tokens/azure-identity-token)" --service-principal -u "cb5f1754-3267-44d3-a129-4dd38c02e5fd" -t "531ff96d-0ae9-462a-8d2d-bec7c0b42082"
-SHELL
 
 SP_SECRET=$(az keyvault secret show --vault-name infra-vault-sandbox --name azure-devops-sp-token --query value -o tsv)
 
