@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e -x
 
-az login --identity --allow-no-subscriptions
+az login --identity --allow-no-subscriptions --username "cb5f1754-3267-44d3-a129-4dd38c02e5fd" --debug
 
 SP_SECRET=$(az keyvault secret show --vault-name infra-vault-sandbox --name azure-devops-sp-token --query value -o tsv)
 
