@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e -x
 
+curl -v http://169.254.169.254/metadata/instance\?api-version\=2021-01-01 -H "Metadata: true"
+
 az login --identity --allow-no-subscriptions
 
 SP_SECRET=$(az keyvault secret show --vault-name infra-vault-sandbox --name azure-devops-sp-token --query value -o tsv)
