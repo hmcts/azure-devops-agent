@@ -21,9 +21,8 @@ fi
 #     exit 1
 #   fi
 
-  AZP_TOKEN_FILE=/azp/.token
-  echo -n "$TOKEN" > "$AZP_TOKEN_FILE"
-fi
+AZP_TOKEN_FILE=/azp/.token
+echo -n "$TOKEN" > "$AZP_TOKEN_FILE"
 
 # unset AZP_TOKEN
 
