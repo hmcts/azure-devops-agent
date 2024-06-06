@@ -2,14 +2,14 @@
 set -e -x
 
 az login --federated-token "$(cat  $AZURE_FEDERATED_TOKEN_FILE)" --service-principal -u $AZURE_CLIENT_ID -t $AZURE_TENANT_ID
-TOKEN=$(cat $AZURE_FEDERATED_TOKEN_FILE)
+# TOKEN=$(cat $AZURE_FEDERATED_TOKEN_FILE)
 
 # SP_SECRET=$(az keyvault secret show --vault-name infra-vault-sandbox --name azure-devops-sp-token --query value -o tsv)
 
 # az login --service-principal -u "10936009-a112-4733-bb2a-94ee240b79ff" -p $SP_SECRET --tenant $AZURE_TENANT_ID --allow-no-subscriptions
 
 # # Obtain an access token using the Azure CLI
-# TOKEN=$(az account get-access-token --resource 499b84ac-1321-427f-aa17-267ca6975798 --query accessToken -o tsv)
+TOKEN=$(az account get-access-token --resource 499b84ac-1321-427f-aa17-267ca6975798 --query accessToken -o tsv)
 
 if [ -z "$AZP_URL" ]; then
   echo 1>&2 "error: missing AZP_URL environment variable"
