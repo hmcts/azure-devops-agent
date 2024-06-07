@@ -1,27 +1,17 @@
 #!/bin/bash
 set -e
 
-# Create env variable to support PAT retrieval from key vault mount
-if [ -f "/kvmnt/azure-devops-agent-token" ]; then
-  export AZP_TOKEN=$(cat /kvmnt/azure-devops-agent-token)
-fi
+az login --federated-token "$(cat  $AZURE_FEDERATED_TOKEN_FILE)" --service-principal -u $AZURE_CLIENT_ID -t $AZURE_TENANT_ID
+
+TOKEN=$(az account get-access-token --resource 499b84ac-1321-427f-aa17-267ca6975798 --query accessToken -o tsv)
 
 if [ -z "$AZP_URL" ]; then
   echo 1>&2 "error: missing AZP_URL environment variable"
   exit 1
 fi
 
-if [ -z "$AZP_TOKEN_FILE" ]; then
-  if [ -z "$AZP_TOKEN" ]; then
-    echo 1>&2 "error: missing AZP_TOKEN environment variable"
-    exit 1
-  fi
-
-  AZP_TOKEN_FILE=/azp/.token
-  echo -n $AZP_TOKEN > "$AZP_TOKEN_FILE"
-fi
-
-unset AZP_TOKEN
+AZP_TOKEN_FILE=/azp/.token
+echo -n "$TOKEN" > "$AZP_TOKEN_FILE"
 
 if [ -n "$AZP_WORK" ]; then
   mkdir -p "$AZP_WORK"
