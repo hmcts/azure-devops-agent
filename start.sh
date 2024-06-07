@@ -49,7 +49,7 @@ export VSO_AGENT_IGNORE=AZP_TOKEN,AZP_TOKEN_FILE
 print_header "1. Determining matching Azure Pipelines agent..."
 
 AZP_AGENT_PACKAGES=$(curl -LsS \
-    -u user:"$TOKEN" \
+    -u user:$(cat "$AZP_TOKEN_FILE") \
     -H 'Accept:application/json;' \
     "$AZP_URL/_apis/distributedtask/packages/agent?platform=linux-x64&top=1")
 
