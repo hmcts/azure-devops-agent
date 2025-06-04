@@ -78,7 +78,7 @@ RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - > /d
   && apt-get install -y docker-ce
 
 # Install SQLPackage
-ARG SQLPACKAGE_URL=https://go.microsoft.com/fwlink/?linkid=2143497
+ARG SQLPACKAGE_URL=https://go.microsoft.com/fwlink/?linkid=2316311
 RUN mkdir /opt/sqlpackage \
     && wget -O sqlpackage-linux.zip ${SQLPACKAGE_URL} \
     && unzip sqlpackage-linux.zip -d /opt/sqlpackage \
