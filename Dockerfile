@@ -38,6 +38,9 @@ RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
 RUN curl -sL https://deb.nodesource.com/setup_20.x | bash - \
   && apt-get install -y nodejs
 
+RUN npm install -g corepack \
+  && corepack prepare yarn@stable --activate
+
 # Install Azure CLI storage extension
 RUN az extension add --name storage-preview
 
