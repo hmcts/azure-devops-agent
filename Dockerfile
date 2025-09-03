@@ -36,6 +36,11 @@ RUN apt-get update \
 
 RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
 
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /usr/share/keyrings/powershell.gpg >/dev/null \
+  && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/powershell.gpg] https://packages.microsoft.com/ubuntu/24.04/prod noble main" | tee /etc/apt/sources.list.d/powershell.list \
+  && apt-get update \
+  && apt-get install -y powershell
+
 RUN curl -sL https://deb.nodesource.com/setup_20.x | bash - \
   && apt-get install -y nodejs
 
@@ -76,13 +81,6 @@ RUN curl -sSL -O https://packages.microsoft.com/config/ubuntu/24.04/packages-mic
   && ACCEPT_EULA=Y apt-get install -y --no-install-recommends mssql-tools18 unixodbc-dev \
   && ln -s /opt/mssql-tools/bin/sqlcmd /usr/bin/sqlcmd \
     && ln -s /opt/mssql-tools/bin/bcp /usr/bin/bcp
-
-RUN rm -rf /etc/apt/sources.list.d/*
-
-RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /usr/share/keyrings/powershell.gpg >/dev/null \
-  && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/powershell.gpg] https://packages.microsoft.com/ubuntu/24.04/prod noble main" | tee /etc/apt/sources.list.d/powershell.list \
-  && apt-get update \
-  && apt-get install -y powershell
 
 # Install Ansible
 RUN add-apt-repository --yes --update ppa:ansible/ansible \
