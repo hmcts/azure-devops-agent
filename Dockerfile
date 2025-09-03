@@ -75,10 +75,7 @@ RUN mkdir /opt/sqlpackage \
     && ln -s /opt/sqlpackage/sqlpackage /usr/bin/sqlpackage
 
 # Install MSSQL Tools
-RUN curl -sSL -O https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb \
-  && dpkg -i packages-microsoft-prod.deb \
-  && apt-get update \
-  && ACCEPT_EULA=Y apt-get install -y --no-install-recommends mssql-tools18 unixodbc-dev \
+RUN ACCEPT_EULA=Y apt-get install -y --no-install-recommends mssql-tools18 unixodbc-dev \
   && ln -s /opt/mssql-tools/bin/sqlcmd /usr/bin/sqlcmd \
     && ln -s /opt/mssql-tools/bin/bcp /usr/bin/bcp
 
