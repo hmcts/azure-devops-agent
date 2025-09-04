@@ -32,7 +32,24 @@ RUN apt-get update \
         python3-requests \
         python3-packaging \
         bsdmainutils \
-        gnupg2
+        gnupg2 \
+        make \
+        build-essential \
+        libssl-dev \
+        zlib1g-dev \
+        libbz2-dev \
+        libreadline-dev \
+        libsqlite3-dev \
+        curl \ 
+        git \
+        libncursesw5-dev \ 
+        xz-utils \
+        tk-dev \
+        libxml2-dev \
+        libxmlsec1-dev \
+        libffi-dev \
+        liblzma-dev \
+        gcc
 
 RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
 
@@ -91,6 +108,14 @@ RUN curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | gpg --d
 RUN echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | tee /etc/apt/sources.list.d/kubernetes.list
 RUN apt update
 RUN apt install kubectl -y
+
+# Install pyenv
+RUN curl -fsSL https://pyenv.run | bash
+
+# Set up environment for pyenv
+RUN echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc \
+    echo '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc \
+    echo 'eval "$(pyenv init - bash)"' >> ~/.bashrc
 
 RUN rm -rf /var/lib/apt/lists/* \
   && rm -rf /etc/apt/sources.list.d/*
