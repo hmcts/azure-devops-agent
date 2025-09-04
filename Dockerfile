@@ -92,6 +92,9 @@ RUN echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://p
 RUN apt update
 RUN apt install kubectl -y
 
+RUN rm -rf /var/lib/apt/lists/* \
+  && rm -rf /etc/apt/sources.list.d/*
+
 WORKDIR /azp
 
 COPY ./start.sh .
