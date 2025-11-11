@@ -1,0 +1,46 @@
+FROM mcr.microsoft.com/windows/servercore:ltsc2022
+
+# To make it easier for build and release pipelines to run,
+# configure PowerShell execution policy
+RUN powershell -Command Set-ExecutionPolicy Bypass -Scope Process -Force
+
+# Install Chocolatey package manager
+RUN powershell -Command " \
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; \
+    iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))"
+
+# Install essential tools
+RUN choco install -y \
+    git \
+    curl \
+    jq \
+    powershell-core \
+    azure-cli \
+    unzip \
+    zip
+
+# Install Node.js
+RUN choco install -y nodejs --version=20.11.0
+
+# Enable corepack for yarn
+RUN corepack enable && corepack prepare yarn@stable --activate
+
+# Install Java OpenJDKs
+RUN choco install -y openjdk11 openjdk17
+
+# Set Java environment variables
+ENV JAVA_HOME_11_X64="C:\Program Files\OpenJDK\jdk-11" \
+    JAVA_HOME_17_X64="C:\Program Files\OpenJDK\jdk-17" \
+    JAVA_HOME="C:\Program Files\OpenJDK\jdk-11" \
+    JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF8
+
+# Install Docker (requires Windows Server 2016 or later)
+RUN powershell -Command " \
+    Install-Module -Name DockerMsftProvider -Repository PSGallery -Force; \
+    Install-Package -Name docker -ProviderName DockerMsftProvider -Force"
+
+WORKDIR C:/azp
+
+COPY ./start-windows.ps1 ./start.ps1
+
+CMD ["pwsh", "-File", ".\\start.ps1"]
