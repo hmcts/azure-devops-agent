@@ -11,6 +11,8 @@ name: Publish
 jobs:
   build-and-deploy-linux:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - uses: actions/checkout@v5
@@ -39,6 +41,8 @@ jobs:
 
   build-and-deploy-windows:
     runs-on: windows-2022
+    permissions:
+      contents: read
 
     steps:
       - uses: actions/checkout@v5
