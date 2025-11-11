@@ -84,4 +84,5 @@ Both Linux and Windows agents support the following environment variables:
 - PowerShell Core
 - Node.js 20.x with Yarn
 - Java OpenJDK 11 and 17
-- Docker (Windows containers)
+
+**Note:** Docker access for Windows containers is typically provided by mounting the host's Docker socket, similar to the Linux implementation.

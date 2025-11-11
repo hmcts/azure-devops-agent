@@ -34,10 +34,8 @@ ENV JAVA_HOME_11_X64="C:\Program Files\OpenJDK\jdk-11" \
     JAVA_HOME="C:\Program Files\OpenJDK\jdk-11" \
     JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF8
 
-# Install Docker (requires Windows Server 2016 or later)
-RUN powershell -Command " \
-    Install-Module -Name DockerMsftProvider -Repository PSGallery -Force; \
-    Install-Package -Name docker -ProviderName DockerMsftProvider -Force"
+# Note: Docker is typically accessed from the host when running Windows containers.
+# If Docker in Docker is required, mount the Docker socket from the host.
 
 WORKDIR C:/azp
 
