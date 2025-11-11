@@ -28,6 +28,16 @@ RUN corepack enable && corepack prepare yarn@stable --activate
 # Install Java OpenJDKs
 RUN choco install -y openjdk11 openjdk17
 
+# Install .NET Framework 4.8 Developer Pack
+RUN choco install -y netfx-4.8-devpack
+
+# Install Visual Studio Build Tools 2022 with .NET desktop build tools
+# This includes MSBuild, .NET Framework targeting packs, and other build tools
+RUN choco install -y visualstudio2022buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.ManagedDesktopBuildTools --add Microsoft.VisualStudio.Workload.NetCoreBuildTools --includeRecommended --quiet --wait"
+
+# Install NuGet CLI
+RUN choco install -y nuget.commandline
+
 # Set Java environment variables
 ENV JAVA_HOME_11_X64="C:\Program Files\OpenJDK\jdk-11" \
     JAVA_HOME_17_X64="C:\Program Files\OpenJDK\jdk-17" \
