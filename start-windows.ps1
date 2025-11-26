@@ -4,6 +4,17 @@ $ErrorActionPreference = 'Stop'
 # Set TLS 1.2 for secure connections
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
+# Fix PowerShell module conflicts by setting PSModulePath to avoid duplicate module loading
+# This prevents conflicts between Windows PowerShell and PowerShell Core modules
+$env:PSModulePath = @(
+    "C:\Program Files\PowerShell\7\Modules",
+    "C:\Program Files\WindowsPowerShell\Modules",
+    "C:\Windows\system32\WindowsPowerShell\v1.0\Modules"
+) -join ';'
+
+# Disable automatic loading of custom type data to prevent conflicts
+$env:__PSDisableTypeDataLoading = '1'
+
 function Print-Header {
     param([string]$Text)
     Write-Host "`n$Text`n" -ForegroundColor Cyan
@@ -103,6 +114,16 @@ Set-Location "C:\azp\agent"
 if (Test-Path ".\env.ps1") {
     . .\env.ps1
 }
+
+# Create .env file to configure agent environment and prevent PowerShell conflicts
+$envContent = @"
+# Configure PowerShell module path to avoid conflicts
+PSModulePath=C:\Program Files\PowerShell\7\Modules;C:\Program Files\WindowsPowerShell\Modules;C:\Windows\system32\WindowsPowerShell\v1.0\Modules
+# Prevent automatic loading of custom type data
+__PSDisableTypeDataLoading=1
+"@
+
+$envContent | Out-File -FilePath "C:\azp\agent\.env" -Encoding utf8
 
 # Register cleanup handlers
 Register-EngineEvent -SourceIdentifier PowerShell.Exiting -Action $cleanup
