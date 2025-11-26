@@ -70,13 +70,9 @@ jobs:
         run: |
           docker build -f Dockerfile.windows -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/azure-devops-agent-windows:pr-${{github.event.number}}-${{ steps.prep.outputs.BUILD_ID }} .
           docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/azure-devops-agent-windows:pr-${{github.event.number}}-${{ steps.prep.outputs.BUILD_ID }}
-        env:
-          DOCKER_BUILDKIT: 1
         if: startsWith(github.ref, 'refs/pull')
       - name: Build and push prod image
         run: |
           docker build -f Dockerfile.windows -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/azure-devops-agent-windows:prod-${{ steps.prep.outputs.BUILD_ID }} .
           docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/azure-devops-agent-windows:prod-${{github.event.number}}-${{ steps.prep.outputs.BUILD_ID }}
-        env:
-          DOCKER_BUILDKIT: 1
         if: github.ref == 'refs/heads/main'
