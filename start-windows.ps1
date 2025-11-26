@@ -130,7 +130,8 @@ try {
     Print-Header "4. Running Azure Pipelines agent..."
     
     # Run the agent
-    & .\run.cmd $args
+    $cmdArgs = if ($env:CMD_ARGS) { $env:CMD_ARGS -split ' ' } else { @() }
+    & .\run.cmd @cmdArgs
     
 } finally {
     & $cleanup
