@@ -76,15 +76,13 @@ RUN powershell -Command " \
     "
 
 # Create a Types.ps1xml override file to prevent duplicate type definitions
-RUN powershell -Command " \n\
-    `$typesOverride = @' \n\
-<?xml version=\"1.0\" encoding=\"utf-8\"?> \n\
-<Types> \n\
-    <!-- Empty types file to prevent duplicate loading --> \n\
-</Types> \n\
-'@; \n\
-    `$typesPath = 'C:\Windows\System32\WindowsPowerShell\v1.0\Types.Custom.ps1xml'; \n\
-    `$typesOverride | Out-File -FilePath `$typesPath -Encoding utf8 -Force \n\
+RUN powershell -Command " \
+    $typesOverride = '<?xml version=\"1.0\" encoding=\"utf-8\"?>' + [Environment]::NewLine + \
+    '<Types>' + [Environment]::NewLine + \
+    '    <!-- Empty types file to prevent duplicate loading -->' + [Environment]::NewLine + \
+    '</Types>'; \
+    $typesPath = 'C:\Windows\System32\WindowsPowerShell\v1.0\Types.Custom.ps1xml'; \
+    $typesOverride | Out-File -FilePath $typesPath -Encoding utf8 -Force \
     "
 
 # Note: Docker is typically accessed from the host when running Windows containers.
