@@ -110,18 +110,15 @@ Register-EngineEvent -SourceIdentifier PowerShell.Exiting -Action $cleanup
 try {
     Print-Header "3. Configuring Azure Pipelines agent..."
     
-    $agentName = if ($env:AZP_AGENT_NAME) { $env:AZP_AGENT_NAME } else { $env:COMPUTERNAME }
-    $poolName = if ($env:AZP_POOL) { $env:AZP_POOL } else { "Default" }
-    $workDir = if ($env:AZP_WORK) { $env:AZP_WORK } else { "_work" }
     $token = Get-Content $AZP_TOKEN_FILE
     
     & .\config.cmd --unattended `
-        --agent $agentName `
+        --agent "$(if (Test-Path Env:AZP_AGENT_NAME) { ${Env:AZP_AGENT_NAME} } else { hostname })" `
         --url $env:AZP_URL `
         --auth PAT `
         --token $token `
-        --pool $poolName `
-        --work $workDir `
+        --pool "$(if (Test-Path Env:AZP_POOL) { ${Env:AZP_POOL} } else { 'Default' })" `
+        --work "$(if (Test-Path Env:AZP_WORK) { ${Env:AZP_WORK} } else { '_work' })" `
         --replace `
         --acceptTeeEula
     
