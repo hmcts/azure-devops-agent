@@ -12,7 +12,7 @@ RUN powershell -Command " \
     choco feature enable -n allowGlobalConfirmation; \
     choco feature enable -n useRememberedArgumentsForUpgrades"
 
-# Install essential tools, Node.js, and Java in a single layer to improve caching
+# Install essential tools and Java in a single layer to improve caching
 # Group related packages together to reduce layers and enable parallel downloads
 RUN choco install -y --no-progress --limit-output \
     git \
@@ -22,10 +22,12 @@ RUN choco install -y --no-progress --limit-output \
     azure-cli \
     unzip \
     zip \
-    nodejs --version=20.11.0 \
     openjdk11 \
     openjdk17 \
     nuget.commandline
+
+# Install Node.js with specific version in separate command to avoid version conflict
+RUN choco install -y --no-progress --limit-output nodejs --version=20.11.0
 
 # Enable corepack for yarn (separate layer as it's quick and uses npm)
 RUN corepack enable && corepack prepare yarn@stable --activate
