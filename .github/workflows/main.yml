@@ -56,7 +56,8 @@ jobs:
 
       - name: Set up Docker Buildx
         run: |
-          docker buildx create --use --name builder --driver docker-container --driver-opt network=host
+          docker buildx create --name builder --driver docker-container --driver-opt network=host
+          docker buildx use builder
           docker buildx inspect --bootstrap
 
       - name: 'Build and push Windows image'
