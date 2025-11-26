@@ -54,11 +54,6 @@ jobs:
           $ts = [int][double]::Parse((Get-Date -UFormat %s))
           echo "::set-output name=BUILD_ID::${sha}-${ts}"
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        with:
-          driver: docker
-
       - name: 'Build and push Windows image'
         uses: azure/docker-login@v2
         with:
@@ -67,19 +62,11 @@ jobs:
           password: ${{ secrets.REGISTRY_PASSWORD }}
       - name: Build and push PR image
         run: |
-          docker buildx build `
-            --cache-from=type=registry,ref=${{ secrets.REGISTRY_LOGIN_SERVER }}/azure-devops-agent-windows:buildcache `
-            --cache-to=type=registry,ref=${{ secrets.REGISTRY_LOGIN_SERVER }}/azure-devops-agent-windows:buildcache,mode=max `
-            -f Dockerfile.windows `
-            -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/azure-devops-agent-windows:pr-${{github.event.number}}-${{ steps.prep.outputs.BUILD_ID }} `
-            --push .
+          docker build -f Dockerfile.windows -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/azure-devops-agent-windows:pr-${{github.event.number}}-${{ steps.prep.outputs.BUILD_ID }} .
+          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/azure-devops-agent-windows:pr-${{github.event.number}}-${{ steps.prep.outputs.BUILD_ID }}
         if: startsWith(github.ref, 'refs/pull')
       - name: Build and push prod image
         run: |
-          docker buildx build `
-            --cache-from=type=registry,ref=${{ secrets.REGISTRY_LOGIN_SERVER }}/azure-devops-agent-windows:buildcache `
-            --cache-to=type=registry,ref=${{ secrets.REGISTRY_LOGIN_SERVER }}/azure-devops-agent-windows:buildcache,mode=max `
-            -f Dockerfile.windows `
-            -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/azure-devops-agent-windows:prod-${{ steps.prep.outputs.BUILD_ID }} `
-            --push .
+          docker build -f Dockerfile.windows -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/azure-devops-agent-windows:prod-${{ steps.prep.outputs.BUILD_ID }} .
+          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/azure-devops-agent-windows:prod-${{github.event.number}}-${{ steps.prep.outputs.BUILD_ID }}
         if: github.ref == 'refs/heads/main'
