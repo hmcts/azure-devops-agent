@@ -55,26 +55,24 @@ ENV PSModulePath="C:\Program Files\PowerShell\7\Modules;C:\Program Files\Windows
 # Create PowerShell profile to prevent module conflicts in agent tasks
 # This runs for both PowerShell Core and Windows PowerShell
 RUN powershell -Command " \
-    $profileContent = @' \n\
-# Azure DevOps Agent PowerShell Configuration \n\
-`$ErrorActionPreference = ''SilentlyContinue'' \n\
-try { \n\
-    Remove-TypeData -TypeName ''System.Security.AccessControl.ObjectSecurity'' -ErrorAction SilentlyContinue \n\
-} catch { } \n\
-`$ErrorActionPreference = ''Continue'' \n\
-`$env:PSModulePath = ''C:\Program Files\PowerShell\7\Modules;C:\Program Files\WindowsPowerShell\Modules;C:\Windows\system32\WindowsPowerShell\v1.0\Modules'' \n\
-'@; \n\
-    $profilePaths = @( \n\
-        'C:\Windows\System32\WindowsPowerShell\v1.0\profile.ps1', \n\
-        'C:\Program Files\PowerShell\7\profile.ps1' \n\
-    ); \n\
-    foreach ($path in $profilePaths) { \n\
-        $dir = Split-Path -Path $path -Parent; \n\
-        if (-not (Test-Path $dir)) { \n\
-            New-Item -Path $dir -ItemType Directory -Force | Out-Null \n\
-        }; \n\
-        $profileContent | Out-File -FilePath $path -Encoding utf8 -Force \n\
-    } \n\
+    $profileContent = '# Azure DevOps Agent PowerShell Configuration' + [Environment]::NewLine + \
+    '$ErrorActionPreference = ''SilentlyContinue''' + [Environment]::NewLine + \
+    'try {' + [Environment]::NewLine + \
+    '    Remove-TypeData -TypeName ''System.Security.AccessControl.ObjectSecurity'' -ErrorAction SilentlyContinue' + [Environment]::NewLine + \
+    '} catch { }' + [Environment]::NewLine + \
+    '$ErrorActionPreference = ''Continue''' + [Environment]::NewLine + \
+    '$env:PSModulePath = ''C:\Program Files\PowerShell\7\Modules;C:\Program Files\WindowsPowerShell\Modules;C:\Windows\system32\WindowsPowerShell\v1.0\Modules'''; \
+    $profilePaths = @( \
+        'C:\Windows\System32\WindowsPowerShell\v1.0\profile.ps1', \
+        'C:\Program Files\PowerShell\7\profile.ps1' \
+    ); \
+    foreach ($path in $profilePaths) { \
+        $dir = Split-Path -Path $path -Parent; \
+        if (-not (Test-Path $dir)) { \
+            New-Item -Path $dir -ItemType Directory -Force | Out-Null \
+        }; \
+        $profileContent | Out-File -FilePath $path -Encoding utf8 -Force \
+    } \
     "
 
 # Create a Types.ps1xml override file to prevent duplicate type definitions
