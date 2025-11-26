@@ -54,12 +54,6 @@ jobs:
           $ts = [int][double]::Parse((Get-Date -UFormat %s))
           echo "::set-output name=BUILD_ID::${sha}-${ts}"
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        with:
-          driver: docker
-          install: true
-
       - name: 'Build and push Windows image'
         uses: azure/docker-login@v2
         with:

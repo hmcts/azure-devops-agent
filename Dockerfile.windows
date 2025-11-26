@@ -14,8 +14,7 @@ RUN powershell -Command " \
 
 # Install essential tools, Node.js, and Java in a single layer to improve caching
 # Group related packages together to reduce layers and enable parallel downloads
-RUN --mount=type=cache,target=C:\ProgramData\chocolatey\cache \
-    choco install -y --no-progress --limit-output \
+RUN choco install -y --no-progress --limit-output \
     git \
     curl \
     jq \
@@ -32,13 +31,11 @@ RUN --mount=type=cache,target=C:\ProgramData\chocolatey\cache \
 RUN corepack enable && corepack prepare yarn@stable --activate
 
 # Install .NET Framework 4.8 Developer Pack in separate layer (large download)
-RUN --mount=type=cache,target=C:\ProgramData\chocolatey\cache \
-    choco install -y --no-progress netfx-4.8-devpack
+RUN choco install -y --no-progress netfx-4.8-devpack
 
 # Install Visual Studio Build Tools 2022 in separate layer (largest/slowest installation)
-# Using --no-progress and cache mount to speed up
-RUN --mount=type=cache,target=C:\ProgramData\chocolatey\cache \
-    choco install -y --no-progress visualstudio2022buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.ManagedDesktopBuildTools --add Microsoft.VisualStudio.Workload.NetCoreBuildTools --includeRecommended --quiet --wait --norestart"
+# Using --no-progress to speed up
+RUN choco install -y --no-progress visualstudio2022buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.ManagedDesktopBuildTools --add Microsoft.VisualStudio.Workload.NetCoreBuildTools --includeRecommended --quiet --wait --norestart"
 
 # Set Java environment variables
 ENV JAVA_HOME_11_X64="C:\Program Files\OpenJDK\jdk-11" \
