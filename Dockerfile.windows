@@ -55,12 +55,9 @@ ENV __PSDisableTypeDataLoading=1
 # Create PowerShell profile to prevent module conflicts in agent tasks
 RUN powershell -Command " \
     $profilePath = 'C:\Windows\System32\WindowsPowerShell\v1.0\profile.ps1'; \
+    $profileContent = \"`$ErrorActionPreference = 'Continue'; if (-not `$env:__PSDisableTypeDataLoading) { `$env:__PSDisableTypeDataLoading = '1' }\"; \
     New-Item -Path $profilePath -Force | Out-Null; \
-    @' \
-`$ErrorActionPreference = ''Continue'' \
-# Prevent duplicate type data loading \
-if (-not `$env:__PSDisableTypeDataLoading) { `$env:__PSDisableTypeDataLoading = ''1'' } \
-'@ | Out-File -FilePath `$profilePath -Encoding utf8 \
+    $profileContent | Out-File -FilePath $profilePath -Encoding utf8 \
     "
 
 # Note: Docker is typically accessed from the host when running Windows containers.
