@@ -115,15 +115,46 @@ if (Test-Path ".\env.ps1") {
     . .\env.ps1
 }
 
-# Create .env file to configure agent environment and prevent PowerShell conflicts
+# Create .env file to configure agent environment
+# Note: System-wide PowerShell configuration is already set in the Dockerfile
 $envContent = @"
 # Configure PowerShell module path to avoid conflicts
 PSModulePath=C:\Program Files\PowerShell\7\Modules;C:\Program Files\WindowsPowerShell\Modules;C:\Windows\system32\WindowsPowerShell\v1.0\Modules
 # Prevent automatic loading of custom type data
 __PSDisableTypeDataLoading=1
+# Skip loading profiles to prevent type conflicts
+POWERSHELL_UPDATECHECK=Off
 "@
 
 $envContent | Out-File -FilePath "C:\azp\agent\.env" -Encoding utf8
+
+# Verify system-wide PowerShell profiles exist (failsafe check)
+# These should already be created by the Dockerfile, but check anyway
+$systemProfilePaths = @(
+    "$env:ProgramFiles\PowerShell\7\profile.ps1",
+    "C:\Windows\System32\WindowsPowerShell\v1.0\profile.ps1"
+)
+
+foreach ($profilePath in $systemProfilePaths) {
+    if (-not (Test-Path $profilePath)) {
+        Write-Host "Warning: System profile missing at $profilePath - creating it now"
+        $profileDir = Split-Path -Path $profilePath -Parent
+        if (-not (Test-Path $profileDir)) {
+            New-Item -Path $profileDir -ItemType Directory -Force | Out-Null
+        }
+        
+        $psConfigContent = @'
+# Azure DevOps Agent PowerShell Configuration
+$ErrorActionPreference = 'SilentlyContinue'
+try {
+    Remove-TypeData -TypeName 'System.Security.AccessControl.ObjectSecurity' -ErrorAction SilentlyContinue
+} catch { }
+$ErrorActionPreference = 'Continue'
+$env:PSModulePath = 'C:\Program Files\PowerShell\7\Modules;C:\Program Files\WindowsPowerShell\Modules;C:\Windows\system32\WindowsPowerShell\v1.0\Modules'
+'@
+        $psConfigContent | Out-File -FilePath $profilePath -Encoding utf8 -Force
+    }
+}
 
 # Register cleanup handlers
 Register-EngineEvent -SourceIdentifier PowerShell.Exiting -Action $cleanup
@@ -132,6 +163,10 @@ try {
     Print-Header "3. Configuring Azure Pipelines agent..."
     
     $token = Get-Content $AZP_TOKEN_FILE
+    
+    # Configure environment variables for the agent to prevent PowerShell type conflicts
+    $env:POWERSHELL_TELEMETRY_OPTOUT = '1'
+    $env:POWERSHELL_UPDATECHECK = 'Off'
     
     & .\config.cmd --unattended `
         --agent "$(if (Test-Path Env:AZP_AGENT_NAME) { ${Env:AZP_AGENT_NAME} } else { hostname })" `

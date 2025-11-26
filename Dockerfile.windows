@@ -1,42 +1,44 @@
+# syntax=docker/dockerfile:1
 FROM mcr.microsoft.com/windows/servercore:ltsc2022
 
 # To make it easier for build and release pipelines to run,
 # configure PowerShell execution policy
 RUN powershell -Command Set-ExecutionPolicy Bypass -Scope Process -Force
 
-# Install Chocolatey package manager
+# Install Chocolatey package manager with optimizations
 RUN powershell -Command " \
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; \
-    iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))"
+    iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1')); \
+    choco feature enable -n allowGlobalConfirmation; \
+    choco feature enable -n useRememberedArgumentsForUpgrades"
 
-# Install essential tools
-RUN choco install -y \
+# Install essential tools, Node.js, and Java in a single layer to improve caching
+# Group related packages together to reduce layers and enable parallel downloads
+RUN --mount=type=cache,target=C:\ProgramData\chocolatey\cache \
+    choco install -y --no-progress --limit-output \
     git \
     curl \
     jq \
     powershell-core \
     azure-cli \
     unzip \
-    zip
+    zip \
+    nodejs --version=20.11.0 \
+    openjdk11 \
+    openjdk17 \
+    nuget.commandline
 
-# Install Node.js
-RUN choco install -y nodejs --version=20.11.0
-
-# Enable corepack for yarn
+# Enable corepack for yarn (separate layer as it's quick and uses npm)
 RUN corepack enable && corepack prepare yarn@stable --activate
 
-# Install Java OpenJDKs
-RUN choco install -y openjdk11 openjdk17
+# Install .NET Framework 4.8 Developer Pack in separate layer (large download)
+RUN --mount=type=cache,target=C:\ProgramData\chocolatey\cache \
+    choco install -y --no-progress netfx-4.8-devpack
 
-# Install .NET Framework 4.8 Developer Pack
-RUN choco install -y netfx-4.8-devpack
-
-# Install Visual Studio Build Tools 2022 with .NET desktop build tools
-# This includes MSBuild, .NET Framework targeting packs, and other build tools
-RUN choco install -y visualstudio2022buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.ManagedDesktopBuildTools --add Microsoft.VisualStudio.Workload.NetCoreBuildTools --includeRecommended --quiet --wait"
-
-# Install NuGet CLI
-RUN choco install -y nuget.commandline
+# Install Visual Studio Build Tools 2022 in separate layer (largest/slowest installation)
+# Using --no-progress and cache mount to speed up
+RUN --mount=type=cache,target=C:\ProgramData\chocolatey\cache \
+    choco install -y --no-progress visualstudio2022buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.ManagedDesktopBuildTools --add Microsoft.VisualStudio.Workload.NetCoreBuildTools --includeRecommended --quiet --wait --norestart"
 
 # Set Java environment variables
 ENV JAVA_HOME_11_X64="C:\Program Files\OpenJDK\jdk-11" \
@@ -46,18 +48,46 @@ ENV JAVA_HOME_11_X64="C:\Program Files\OpenJDK\jdk-11" \
 
 # Configure PowerShell to prevent module conflicts
 # Set PSModulePath to ensure proper module resolution order
-ENV PSModulePath="C:\Program Files\PowerShell\7\Modules;C:\Program Files\WindowsPowerShell\Modules;C:\Windows\system32\WindowsPowerShell\v1.0\Modules"
-
-# Disable automatic loading of custom type data to prevent conflicts
-# This prevents the "member already present" errors
-ENV __PSDisableTypeDataLoading=1
+ENV PSModulePath="C:\Program Files\PowerShell\7\Modules;C:\Program Files\WindowsPowerShell\Modules;C:\Windows\system32\WindowsPowerShell\v1.0\Modules" \
+    __PSDisableTypeDataLoading=1 \
+    POWERSHELL_UPDATECHECK=Off \
+    POWERSHELL_TELEMETRY_OPTOUT=1
 
 # Create PowerShell profile to prevent module conflicts in agent tasks
+# This runs for both PowerShell Core and Windows PowerShell
 RUN powershell -Command " \
-    $profilePath = 'C:\Windows\System32\WindowsPowerShell\v1.0\profile.ps1'; \
-    $profileContent = \"`$ErrorActionPreference = 'Continue'; if (-not `$env:__PSDisableTypeDataLoading) { `$env:__PSDisableTypeDataLoading = '1' }\"; \
-    New-Item -Path $profilePath -Force | Out-Null; \
-    $profileContent | Out-File -FilePath $profilePath -Encoding utf8 \
+    $profileContent = @' \n\
+# Azure DevOps Agent PowerShell Configuration \n\
+`$ErrorActionPreference = ''SilentlyContinue'' \n\
+try { \n\
+    Remove-TypeData -TypeName ''System.Security.AccessControl.ObjectSecurity'' -ErrorAction SilentlyContinue \n\
+} catch { } \n\
+`$ErrorActionPreference = ''Continue'' \n\
+`$env:PSModulePath = ''C:\Program Files\PowerShell\7\Modules;C:\Program Files\WindowsPowerShell\Modules;C:\Windows\system32\WindowsPowerShell\v1.0\Modules'' \n\
+'@; \n\
+    $profilePaths = @( \n\
+        'C:\Windows\System32\WindowsPowerShell\v1.0\profile.ps1', \n\
+        'C:\Program Files\PowerShell\7\profile.ps1' \n\
+    ); \n\
+    foreach ($path in $profilePaths) { \n\
+        $dir = Split-Path -Path $path -Parent; \n\
+        if (-not (Test-Path $dir)) { \n\
+            New-Item -Path $dir -ItemType Directory -Force | Out-Null \n\
+        }; \n\
+        $profileContent | Out-File -FilePath $path -Encoding utf8 -Force \n\
+    } \n\
+    "
+
+# Create a Types.ps1xml override file to prevent duplicate type definitions
+RUN powershell -Command " \n\
+    `$typesOverride = @' \n\
+<?xml version=\"1.0\" encoding=\"utf-8\"?> \n\
+<Types> \n\
+    <!-- Empty types file to prevent duplicate loading --> \n\
+</Types> \n\
+'@; \n\
+    `$typesPath = 'C:\Windows\System32\WindowsPowerShell\v1.0\Types.Custom.ps1xml'; \n\
+    `$typesOverride | Out-File -FilePath `$typesPath -Encoding utf8 -Force \n\
     "
 
 # Note: Docker is typically accessed from the host when running Windows containers.
@@ -66,5 +96,6 @@ RUN powershell -Command " \
 WORKDIR C:/azp
 
 COPY ./start-windows.ps1 ./start.ps1
+COPY ./init-powershell.ps1 ./init-powershell.ps1
 
 CMD ["pwsh", "-File", ".\\start.ps1"]
