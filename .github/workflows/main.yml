@@ -55,10 +55,7 @@ jobs:
           echo "::set-output name=BUILD_ID::${sha}-${ts}"
 
       - name: Set up Docker Buildx
-        run: |
-          docker buildx create --name builder --driver docker-container --driver-opt network=host
-          docker buildx use builder
-          docker buildx inspect --bootstrap
+        uses: docker/setup-buildx-action@v3
 
       - name: 'Build and push Windows image'
         uses: azure/docker-login@v2
