@@ -53,40 +53,35 @@ ENV POWERSHELL_UPDATECHECK=Off \
 # Create a comprehensive PowerShell configuration to prevent type data conflicts
 # This creates both AllUsersAllHosts profiles for Windows PowerShell and PowerShell Core
 RUN powershell -NoProfile -Command " \
-    $profileContent = @' \
-# Azure DevOps Agent PowerShell Configuration \
-# Prevent type data loading conflicts \
-\
-# Set strict module path to prevent cross-contamination \
-$env:PSModulePath = 'C:\Program Files\PowerShell\7\Modules;C:\Windows\system32\WindowsPowerShell\v1.0\Modules' \
-\
-# Disable telemetry and update checks \
-$env:POWERSHELL_UPDATECHECK = 'Off' \
-$env:POWERSHELL_TELEMETRY_OPTOUT = '1' \
-\
-# Remove problematic type data if already loaded \
-$ErrorActionPreference = 'SilentlyContinue' \
-$problematicTypes = @( \
-    'System.Security.AccessControl.ObjectSecurity', \
-    'System.Security.AccessControl.FileSystemSecurity', \
-    'System.Security.AccessControl.DirectorySecurity', \
-    'System.Security.AccessControl.FileSecurity', \
-    'System.Security.AccessControl.RegistrySecurity' \
-) \
-foreach ($typeName in $problematicTypes) { \
-    Remove-TypeData -TypeName $typeName -ErrorAction SilentlyContinue \
-} \
-$ErrorActionPreference = 'Continue' \
-'@ \
-    ; \
+    $nl = [Environment]::NewLine; \
+    $profileContent = '# Azure DevOps Agent PowerShell Configuration' + $nl; \
+    $profileContent += '# Prevent type data loading conflicts' + $nl + $nl; \
+    $profileContent += '# Set strict module path to prevent cross-contamination' + $nl; \
+    $profileContent += '$env:PSModulePath = ''C:\Program Files\PowerShell\7\Modules;C:\Windows\system32\WindowsPowerShell\v1.0\Modules''' + $nl + $nl; \
+    $profileContent += '# Disable telemetry and update checks' + $nl; \
+    $profileContent += '$env:POWERSHELL_UPDATECHECK = ''Off''' + $nl; \
+    $profileContent += '$env:POWERSHELL_TELEMETRY_OPTOUT = ''1''' + $nl + $nl; \
+    $profileContent += '# Remove problematic type data if already loaded' + $nl; \
+    $profileContent += '$ErrorActionPreference = ''SilentlyContinue''' + $nl; \
+    $profileContent += '$problematicTypes = @(' + $nl; \
+    $profileContent += '    ''System.Security.AccessControl.ObjectSecurity'',' + $nl; \
+    $profileContent += '    ''System.Security.AccessControl.FileSystemSecurity'',' + $nl; \
+    $profileContent += '    ''System.Security.AccessControl.DirectorySecurity'',' + $nl; \
+    $profileContent += '    ''System.Security.AccessControl.FileSecurity'',' + $nl; \
+    $profileContent += '    ''System.Security.AccessControl.RegistrySecurity''' + $nl; \
+    $profileContent += ')' + $nl; \
+    $profileContent += 'foreach ($typeName in $problematicTypes) {' + $nl; \
+    $profileContent += '    Remove-TypeData -TypeName $typeName -ErrorAction SilentlyContinue' + $nl; \
+    $profileContent += '}' + $nl; \
+    $profileContent += '$ErrorActionPreference = ''Continue''' + $nl; \
     \
     $profilePaths = @( \
         @{ \
-            Path = 'C:\Windows\System32\WindowsPowerShell\v1.0\profile.ps1' \
+            Path = 'C:\Windows\System32\WindowsPowerShell\v1.0\profile.ps1'; \
             Name = 'Windows PowerShell AllUsersAllHosts' \
         }, \
         @{ \
-            Path = 'C:\Program Files\PowerShell\7\profile.ps1' \
+            Path = 'C:\Program Files\PowerShell\7\profile.ps1'; \
             Name = 'PowerShell Core AllUsersAllHosts' \
         } \
     ); \
