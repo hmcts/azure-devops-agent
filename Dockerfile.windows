@@ -77,7 +77,7 @@ RUN powershell -Command " \
 
 # Create a Types.ps1xml override file to prevent duplicate type definitions
 RUN powershell -Command " \
-    $typesOverride = '<?xml version=\"1.0\" encoding=\"utf-8\"?>' + [Environment]::NewLine + \
+    $typesOverride = '<?xml version=' + [char]34 + '1.0' + [char]34 + ' encoding=' + [char]34 + 'utf-8' + [char]34 + '?>' + [Environment]::NewLine + \
     '<Types>' + [Environment]::NewLine + \
     '    <!-- Empty types file to prevent duplicate loading -->' + [Environment]::NewLine + \
     '</Types>'; \
