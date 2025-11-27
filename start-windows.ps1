@@ -115,34 +115,6 @@ if (Test-Path ".\env.ps1") {
     . .\env.ps1
 }
 
-# Verify system-wide PowerShell profiles exist (failsafe check)
-# These should already be created by the Dockerfile, but check anyway
-$systemProfilePaths = @(
-    "$env:ProgramFiles\PowerShell\7\profile.ps1",
-    "C:\Windows\System32\WindowsPowerShell\v1.0\profile.ps1"
-)
-
-foreach ($profilePath in $systemProfilePaths) {
-    if (-not (Test-Path $profilePath)) {
-        Write-Host "Warning: System profile missing at $profilePath - creating it now"
-        $profileDir = Split-Path -Path $profilePath -Parent
-        if (-not (Test-Path $profileDir)) {
-            New-Item -Path $profileDir -ItemType Directory -Force | Out-Null
-        }
-        
-        $psConfigContent = @'
-# Azure DevOps Agent PowerShell Configuration
-$ErrorActionPreference = 'SilentlyContinue'
-try {
-    Remove-TypeData -TypeName 'System.Security.AccessControl.ObjectSecurity' -ErrorAction SilentlyContinue
-} catch { }
-$ErrorActionPreference = 'Continue'
-$env:PSModulePath = 'C:\Program Files\PowerShell\7\Modules;C:\Program Files\WindowsPowerShell\Modules;C:\Windows\system32\WindowsPowerShell\v1.0\Modules'
-'@
-        $psConfigContent | Out-File -FilePath $profilePath -Encoding utf8 -Force
-    }
-}
-
 # Register cleanup handlers
 Register-EngineEvent -SourceIdentifier PowerShell.Exiting -Action $cleanup
 
@@ -151,20 +123,13 @@ try {
     
     $token = Get-Content $AZP_TOKEN_FILE
     
-    # Configure environment variables for the agent to prevent PowerShell type conflicts
+    # Configure environment variables to prevent PowerShell type conflicts
+    # These will be inherited by the agent and all tasks it spawns
     $env:POWERSHELL_TELEMETRY_OPTOUT = '1'
     $env:POWERSHELL_UPDATECHECK = 'Off'
+    # Critical: Use only PowerShell Core modules and Windows PowerShell system modules
+    # Exclude C:\Program Files\WindowsPowerShell\Modules to prevent type data conflicts
     $env:PSModulePath = 'C:\Program Files\PowerShell\7\Modules;C:\Windows\system32\WindowsPowerShell\v1.0\Modules'
-    
-    # Create agent environment file to configure PowerShell for all tasks
-    $agentEnvFile = "C:\azp\agent\.env"
-    $envVars = @(
-        "PSModulePath=C:\Program Files\PowerShell\7\Modules;C:\Windows\system32\WindowsPowerShell\v1.0\Modules"
-        "POWERSHELL_UPDATECHECK=Off"
-        "POWERSHELL_TELEMETRY_OPTOUT=1"
-    )
-    $envVars | Out-File -FilePath $agentEnvFile -Encoding ascii -Force
-    Write-Host "Created agent .env file with PowerShell configuration"
     
     & .\config.cmd --unattended `
         --agent "$(if (Test-Path Env:AZP_AGENT_NAME) { ${Env:AZP_AGENT_NAME} } else { hostname })" `
@@ -185,6 +150,8 @@ try {
     
     # Run the agent
     $cmdArgs = if ($env:CMD_ARGS) { $env:CMD_ARGS -split ' ' } else { @() }
+
+    Write-Host "Executing: .\run.cmd $cmdArgs"
     & .\run.cmd @cmdArgs
     
 } finally {

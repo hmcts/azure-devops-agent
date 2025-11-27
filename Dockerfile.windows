@@ -46,58 +46,11 @@ ENV JAVA_HOME_11_X64="C:\Program Files\OpenJDK\jdk-11" \
     JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF8
 
 # Configure PowerShell environment variables to prevent module conflicts
+# CRITICAL: Exclude C:\Program Files\WindowsPowerShell\Modules to avoid type data conflicts
+# between Windows PowerShell 5.1 and PowerShell Core 7
 ENV POWERSHELL_UPDATECHECK=Off \
     POWERSHELL_TELEMETRY_OPTOUT=1 \
     PSModulePath="C:\Program Files\PowerShell\7\Modules;C:\Windows\system32\WindowsPowerShell\v1.0\Modules"
-
-# Create a comprehensive PowerShell configuration to prevent type data conflicts
-# This creates both AllUsersAllHosts profiles for Windows PowerShell and PowerShell Core
-RUN powershell -NoProfile -Command " \
-    $nl = [Environment]::NewLine; \
-    $profileContent = '# Azure DevOps Agent PowerShell Configuration' + $nl; \
-    $profileContent += '# Prevent type data loading conflicts' + $nl + $nl; \
-    $profileContent += '# Set strict module path to prevent cross-contamination' + $nl; \
-    $profileContent += '$env:PSModulePath = ''C:\Program Files\PowerShell\7\Modules;C:\Windows\system32\WindowsPowerShell\v1.0\Modules''' + $nl + $nl; \
-    $profileContent += '# Disable telemetry and update checks' + $nl; \
-    $profileContent += '$env:POWERSHELL_UPDATECHECK = ''Off''' + $nl; \
-    $profileContent += '$env:POWERSHELL_TELEMETRY_OPTOUT = ''1''' + $nl + $nl; \
-    $profileContent += '# Remove problematic type data if already loaded' + $nl; \
-    $profileContent += '$ErrorActionPreference = ''SilentlyContinue''' + $nl; \
-    $profileContent += '$problematicTypes = @(' + $nl; \
-    $profileContent += '    ''System.Security.AccessControl.ObjectSecurity'',' + $nl; \
-    $profileContent += '    ''System.Security.AccessControl.FileSystemSecurity'',' + $nl; \
-    $profileContent += '    ''System.Security.AccessControl.DirectorySecurity'',' + $nl; \
-    $profileContent += '    ''System.Security.AccessControl.FileSecurity'',' + $nl; \
-    $profileContent += '    ''System.Security.AccessControl.RegistrySecurity''' + $nl; \
-    $profileContent += ')' + $nl; \
-    $profileContent += 'foreach ($typeName in $problematicTypes) {' + $nl; \
-    $profileContent += '    Remove-TypeData -TypeName $typeName -ErrorAction SilentlyContinue' + $nl; \
-    $profileContent += '}' + $nl; \
-    $profileContent += '$ErrorActionPreference = ''Continue''' + $nl; \
-    \
-    $profilePaths = @( \
-        @{ \
-            Path = 'C:\Windows\System32\WindowsPowerShell\v1.0\profile.ps1'; \
-            Name = 'Windows PowerShell AllUsersAllHosts' \
-        }, \
-        @{ \
-            Path = 'C:\Program Files\PowerShell\7\profile.ps1'; \
-            Name = 'PowerShell Core AllUsersAllHosts' \
-        } \
-    ); \
-    \
-    foreach ($profile in $profilePaths) { \
-        Write-Host ('Creating profile: {0}' -f $profile.Name); \
-        $dir = Split-Path -Path $profile.Path -Parent; \
-        if (-not (Test-Path $dir)) { \
-            New-Item -Path $dir -ItemType Directory -Force | Out-Null \
-        }; \
-        $profileContent | Out-File -FilePath $profile.Path -Encoding utf8 -Force; \
-        Write-Host ('Profile created at: {0}' -f $profile.Path) \
-    }; \
-    \
-    Write-Host 'PowerShell profiles configured successfully' \
-    "
 
 # Note: Docker is typically accessed from the host when running Windows containers.
 # If Docker in Docker is required, mount the Docker socket from the host.
