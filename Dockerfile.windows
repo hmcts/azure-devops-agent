@@ -45,44 +45,63 @@ ENV JAVA_HOME_11_X64="C:\Program Files\OpenJDK\jdk-11" \
     JAVA_HOME="C:\Program Files\OpenJDK\jdk-11" \
     JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF8
 
-# Configure PowerShell to prevent module conflicts
-# Set PSModulePath to ensure proper module resolution order
-ENV PSModulePath="C:\Program Files\PowerShell\7\Modules;C:\Program Files\WindowsPowerShell\Modules;C:\Windows\system32\WindowsPowerShell\v1.0\Modules" \
-    __PSDisableTypeDataLoading=1 \
-    POWERSHELL_UPDATECHECK=Off \
-    POWERSHELL_TELEMETRY_OPTOUT=1
+# Configure PowerShell environment variables to prevent module conflicts
+ENV POWERSHELL_UPDATECHECK=Off \
+    POWERSHELL_TELEMETRY_OPTOUT=1 \
+    PSModulePath="C:\Program Files\PowerShell\7\Modules;C:\Windows\system32\WindowsPowerShell\v1.0\Modules"
 
-# Create PowerShell profile to prevent module conflicts in agent tasks
-# This runs for both PowerShell Core and Windows PowerShell
-RUN powershell -Command " \
-    $profileContent = '# Azure DevOps Agent PowerShell Configuration' + [Environment]::NewLine + \
-    '$ErrorActionPreference = ''SilentlyContinue''' + [Environment]::NewLine + \
-    'try {' + [Environment]::NewLine + \
-    '    Remove-TypeData -TypeName ''System.Security.AccessControl.ObjectSecurity'' -ErrorAction SilentlyContinue' + [Environment]::NewLine + \
-    '} catch { }' + [Environment]::NewLine + \
-    '$ErrorActionPreference = ''Continue''' + [Environment]::NewLine + \
-    '$env:PSModulePath = ''C:\Program Files\PowerShell\7\Modules;C:\Program Files\WindowsPowerShell\Modules;C:\Windows\system32\WindowsPowerShell\v1.0\Modules'''; \
+# Create a comprehensive PowerShell configuration to prevent type data conflicts
+# This creates both AllUsersAllHosts profiles for Windows PowerShell and PowerShell Core
+RUN powershell -NoProfile -Command " \
+    $profileContent = @' \
+# Azure DevOps Agent PowerShell Configuration \
+# Prevent type data loading conflicts \
+\
+# Set strict module path to prevent cross-contamination \
+$env:PSModulePath = 'C:\Program Files\PowerShell\7\Modules;C:\Windows\system32\WindowsPowerShell\v1.0\Modules' \
+\
+# Disable telemetry and update checks \
+$env:POWERSHELL_UPDATECHECK = 'Off' \
+$env:POWERSHELL_TELEMETRY_OPTOUT = '1' \
+\
+# Remove problematic type data if already loaded \
+$ErrorActionPreference = 'SilentlyContinue' \
+$problematicTypes = @( \
+    'System.Security.AccessControl.ObjectSecurity', \
+    'System.Security.AccessControl.FileSystemSecurity', \
+    'System.Security.AccessControl.DirectorySecurity', \
+    'System.Security.AccessControl.FileSecurity', \
+    'System.Security.AccessControl.RegistrySecurity' \
+) \
+foreach ($typeName in $problematicTypes) { \
+    Remove-TypeData -TypeName $typeName -ErrorAction SilentlyContinue \
+} \
+$ErrorActionPreference = 'Continue' \
+'@ \
+    ; \
+    \
     $profilePaths = @( \
-        'C:\Windows\System32\WindowsPowerShell\v1.0\profile.ps1', \
-        'C:\Program Files\PowerShell\7\profile.ps1' \
+        @{ \
+            Path = 'C:\Windows\System32\WindowsPowerShell\v1.0\profile.ps1' \
+            Name = 'Windows PowerShell AllUsersAllHosts' \
+        }, \
+        @{ \
+            Path = 'C:\Program Files\PowerShell\7\profile.ps1' \
+            Name = 'PowerShell Core AllUsersAllHosts' \
+        } \
     ); \
-    foreach ($path in $profilePaths) { \
-        $dir = Split-Path -Path $path -Parent; \
+    \
+    foreach ($profile in $profilePaths) { \
+        Write-Host ('Creating profile: {0}' -f $profile.Name); \
+        $dir = Split-Path -Path $profile.Path -Parent; \
         if (-not (Test-Path $dir)) { \
             New-Item -Path $dir -ItemType Directory -Force | Out-Null \
         }; \
-        $profileContent | Out-File -FilePath $path -Encoding utf8 -Force \
-    } \
-    "
-
-# Create a Types.ps1xml override file to prevent duplicate type definitions
-RUN powershell -Command " \
-    $typesOverride = '<?xml version=' + [char]34 + '1.0' + [char]34 + ' encoding=' + [char]34 + 'utf-8' + [char]34 + '?>' + [Environment]::NewLine + \
-    '<Types>' + [Environment]::NewLine + \
-    '    <!-- Empty types file to prevent duplicate loading -->' + [Environment]::NewLine + \
-    '</Types>'; \
-    $typesPath = 'C:\Windows\System32\WindowsPowerShell\v1.0\Types.Custom.ps1xml'; \
-    $typesOverride | Out-File -FilePath $typesPath -Encoding utf8 -Force \
+        $profileContent | Out-File -FilePath $profile.Path -Encoding utf8 -Force; \
+        Write-Host ('Profile created at: {0}' -f $profile.Path) \
+    }; \
+    \
+    Write-Host 'PowerShell profiles configured successfully' \
     "
 
 # Note: Docker is typically accessed from the host when running Windows containers.
@@ -92,5 +111,6 @@ WORKDIR C:/azp
 
 COPY ./start-windows.ps1 ./start.ps1
 COPY ./init-powershell.ps1 ./init-powershell.ps1
+COPY ./powershell-wrapper.ps1 ./powershell-wrapper.ps1
 
 CMD ["pwsh", "-File", ".\\start.ps1"]

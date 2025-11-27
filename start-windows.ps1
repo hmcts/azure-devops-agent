@@ -115,19 +115,6 @@ if (Test-Path ".\env.ps1") {
     . .\env.ps1
 }
 
-# Create .env file to configure agent environment
-# Note: System-wide PowerShell configuration is already set in the Dockerfile
-$envContent = @"
-# Configure PowerShell module path to avoid conflicts
-PSModulePath=C:\Program Files\PowerShell\7\Modules;C:\Program Files\WindowsPowerShell\Modules;C:\Windows\system32\WindowsPowerShell\v1.0\Modules
-# Prevent automatic loading of custom type data
-__PSDisableTypeDataLoading=1
-# Skip loading profiles to prevent type conflicts
-POWERSHELL_UPDATECHECK=Off
-"@
-
-$envContent | Out-File -FilePath "C:\azp\agent\.env" -Encoding utf8
-
 # Verify system-wide PowerShell profiles exist (failsafe check)
 # These should already be created by the Dockerfile, but check anyway
 $systemProfilePaths = @(
@@ -167,6 +154,17 @@ try {
     # Configure environment variables for the agent to prevent PowerShell type conflicts
     $env:POWERSHELL_TELEMETRY_OPTOUT = '1'
     $env:POWERSHELL_UPDATECHECK = 'Off'
+    $env:PSModulePath = 'C:\Program Files\PowerShell\7\Modules;C:\Windows\system32\WindowsPowerShell\v1.0\Modules'
+    
+    # Create agent environment file to configure PowerShell for all tasks
+    $agentEnvFile = "C:\azp\agent\.env"
+    $envVars = @(
+        "PSModulePath=C:\Program Files\PowerShell\7\Modules;C:\Windows\system32\WindowsPowerShell\v1.0\Modules"
+        "POWERSHELL_UPDATECHECK=Off"
+        "POWERSHELL_TELEMETRY_OPTOUT=1"
+    )
+    $envVars | Out-File -FilePath $agentEnvFile -Encoding ascii -Force
+    Write-Host "Created agent .env file with PowerShell configuration"
     
     & .\config.cmd --unattended `
         --agent "$(if (Test-Path Env:AZP_AGENT_NAME) { ${Env:AZP_AGENT_NAME} } else { hostname })" `
