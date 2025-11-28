@@ -1,0 +1,18 @@
+2025-11-27T22:17:16.5219642Z ##[section]Starting: Heartbeat
+2025-11-27T22:17:16.5232075Z ==============================================================================
+2025-11-27T22:17:16.5232609Z Task         : Command line
+2025-11-27T22:17:16.5232791Z Description  : Run a command line script using Bash on Linux and macOS and cmd.exe on Windows
+2025-11-27T22:17:16.5233117Z Version      : 2.250.1
+2025-11-27T22:17:16.5233359Z Author       : Microsoft Corporation
+2025-11-27T22:17:16.5233614Z Help         : https://docs.microsoft.com/azure/devops/pipelines/tasks/utility/command-line
+2025-11-27T22:17:16.5233910Z ==============================================================================
+2025-11-27T22:17:20.7119654Z ##[error]The following error occurred while loading the extended type data file: Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AuditToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AccessToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Sddl is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Access is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Group is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Owner is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Path is already present.
+
+2025-11-27T22:17:20.9462226Z ##[error]The 'ConvertTo-SecureString' command was found in the module 'Microsoft.PowerShell.Security', but the module could not be loaded. For more information, run 'Import-Module Microsoft.PowerShell.Security'.
+2025-11-27T22:17:20.9770223Z ##[section]Finishing: Heartbeat

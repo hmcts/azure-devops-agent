@@ -5,15 +5,13 @@ $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 # Fix PowerShell module conflicts by setting PSModulePath to avoid duplicate module loading
-# This prevents conflicts between Windows PowerShell and PowerShell Core modules
-$env:PSModulePath = @(
-    "C:\Program Files\PowerShell\7\Modules",
-    "C:\Program Files\WindowsPowerShell\Modules",
-    "C:\Windows\system32\WindowsPowerShell\v1.0\Modules"
-) -join ';'
+# CRITICAL: Exclude C:\Program Files\WindowsPowerShell\Modules which contains conflicting type definitions
+# This prevents conflicts between Windows PowerShell 5.1 and PowerShell Core 7
+$env:PSModulePath = 'C:\Program Files\PowerShell\7\Modules;C:\Windows\system32\WindowsPowerShell\v1.0\Modules'
 
-# Disable automatic loading of custom type data to prevent conflicts
-$env:__PSDisableTypeDataLoading = '1'
+# Configure PowerShell to prevent type data loading conflicts
+$env:POWERSHELL_UPDATECHECK = 'Off'
+$env:POWERSHELL_TELEMETRY_OPTOUT = '1'
 
 function Print-Header {
     param([string]$Text)
@@ -122,14 +120,6 @@ try {
     Print-Header "3. Configuring Azure Pipelines agent..."
     
     $token = Get-Content $AZP_TOKEN_FILE
-    
-    # Configure environment variables to prevent PowerShell type conflicts
-    # These will be inherited by the agent and all tasks it spawns
-    $env:POWERSHELL_TELEMETRY_OPTOUT = '1'
-    $env:POWERSHELL_UPDATECHECK = 'Off'
-    # Critical: Use only PowerShell Core modules and Windows PowerShell system modules
-    # Exclude C:\Program Files\WindowsPowerShell\Modules to prevent type data conflicts
-    $env:PSModulePath = 'C:\Program Files\PowerShell\7\Modules;C:\Windows\system32\WindowsPowerShell\v1.0\Modules'
     
     & .\config.cmd --unattended `
         --agent "$(if (Test-Path Env:AZP_AGENT_NAME) { ${Env:AZP_AGENT_NAME} } else { hostname })" `

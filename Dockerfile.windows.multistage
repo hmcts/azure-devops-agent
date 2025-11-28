@@ -1,0 +1,103 @@
+# syntax=docker/dockerfile:1
+# Advanced multi-stage Dockerfile for Azure DevOps Agent (Windows)
+# This approach creates a reusable base image with all tools pre-installed
+
+# Stage 1: Builder - Install all development tools
+FROM mcr.microsoft.com/windows/servercore:ltsc2022 AS builder
+
+# Configure PowerShell execution policy
+RUN powershell -Command Set-ExecutionPolicy Bypass -Scope Process -Force
+
+# Install Chocolatey with optimizations
+RUN powershell -Command " \
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; \
+    iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1')); \
+    choco feature enable -n allowGlobalConfirmation; \
+    choco feature enable -n useRememberedArgumentsForUpgrades"
+
+# Install all tools in optimized batches with cache mounts
+RUN --mount=type=cache,target=C:\ProgramData\chocolatey\cache \
+    choco install -y --no-progress --limit-output \
+    git \
+    curl \
+    jq \
+    powershell-core \
+    azure-cli \
+    unzip \
+    zip \
+    nodejs --version=20.11.0 \
+    openjdk11 \
+    openjdk17 \
+    nuget.commandline
+
+# Enable corepack
+RUN corepack enable && corepack prepare yarn@stable --activate
+
+# Install .NET Framework in separate layer
+RUN --mount=type=cache,target=C:\ProgramData\chocolatey\cache \
+    choco install -y --no-progress netfx-4.8-devpack
+
+# Install Visual Studio Build Tools (slowest operation)
+RUN --mount=type=cache,target=C:\ProgramData\chocolatey\cache \
+    choco install -y --no-progress visualstudio2022buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.ManagedDesktopBuildTools --add Microsoft.VisualStudio.Workload.NetCoreBuildTools --includeRecommended --quiet --wait --norestart"
+
+# Set Java environment variables
+ENV JAVA_HOME_11_X64="C:\Program Files\OpenJDK\jdk-11" \
+    JAVA_HOME_17_X64="C:\Program Files\OpenJDK\jdk-17" \
+    JAVA_HOME="C:\Program Files\OpenJDK\jdk-11" \
+    JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF8
+
+# Configure PowerShell environment
+ENV PSModulePath="C:\Program Files\PowerShell\7\Modules;C:\Program Files\WindowsPowerShell\Modules;C:\Windows\system32\WindowsPowerShell\v1.0\Modules" \
+    __PSDisableTypeDataLoading=1 \
+    POWERSHELL_UPDATECHECK=Off \
+    POWERSHELL_TELEMETRY_OPTOUT=1
+
+# Stage 2: Runtime - Copy from builder and add agent-specific configuration
+FROM mcr.microsoft.com/windows/servercore:ltsc2022
+
+# Copy all installed programs and configuration from builder
+COPY --from=builder C:\\ C:\\
+
+# Create PowerShell profiles to prevent module conflicts
+RUN powershell -Command " \
+    $profileContent = @' \n\
+# Azure DevOps Agent PowerShell Configuration \n\
+`$ErrorActionPreference = ''SilentlyContinue'' \n\
+try { \n\
+    Remove-TypeData -TypeName ''System.Security.AccessControl.ObjectSecurity'' -ErrorAction SilentlyContinue \n\
+} catch { } \n\
+`$ErrorActionPreference = ''Continue'' \n\
+`$env:PSModulePath = ''C:\Program Files\PowerShell\7\Modules;C:\Program Files\WindowsPowerShell\Modules;C:\Windows\system32\WindowsPowerShell\v1.0\Modules'' \n\
+'@; \n\
+    $profilePaths = @( \n\
+        'C:\Windows\System32\WindowsPowerShell\v1.0\profile.ps1', \n\
+        'C:\Program Files\PowerShell\7\profile.ps1' \n\
+    ); \n\
+    foreach ($path in $profilePaths) { \n\
+        $dir = Split-Path -Path $path -Parent; \n\
+        if (-not (Test-Path $dir)) { \n\
+            New-Item -Path $dir -ItemType Directory -Force | Out-Null \n\
+        }; \n\
+        $profileContent | Out-File -FilePath $path -Encoding utf8 -Force \n\
+    } \n\
+    "
+
+# Create Types override
+RUN powershell -Command " \n\
+    `$typesOverride = @' \n\
+<?xml version=\"1.0\" encoding=\"utf-8\"?> \n\
+<Types> \n\
+    <!-- Empty types file to prevent duplicate loading --> \n\
+</Types> \n\
+'@; \n\
+    `$typesPath = 'C:\Windows\System32\WindowsPowerShell\v1.0\Types.Custom.ps1xml'; \n\
+    `$typesOverride | Out-File -FilePath `$typesPath -Encoding utf8 -Force \n\
+    "
+
+WORKDIR C:/azp
+
+COPY ./start-windows.ps1 ./start.ps1
+COPY ./init-powershell.ps1 ./init-powershell.ps1
+
+CMD ["pwsh", "-File", ".\\start.ps1"]
