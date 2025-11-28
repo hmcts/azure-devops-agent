@@ -4,15 +4,6 @@ $ErrorActionPreference = 'Stop'
 # Set TLS 1.2 for secure connections
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-# Fix PowerShell module conflicts by setting PSModulePath to avoid duplicate module loading
-# CRITICAL: Exclude C:\Program Files\WindowsPowerShell\Modules which contains conflicting type definitions
-# This prevents conflicts between Windows PowerShell 5.1 and PowerShell Core 7
-$env:PSModulePath = 'C:\Program Files\PowerShell\7\Modules;C:\Windows\system32\WindowsPowerShell\v1.0\Modules'
-
-# Configure PowerShell to prevent type data loading conflicts
-$env:POWERSHELL_UPDATECHECK = 'Off'
-$env:POWERSHELL_TELEMETRY_OPTOUT = '1'
-
 function Print-Header {
     param([string]$Text)
     Write-Host "`n$Text`n" -ForegroundColor Cyan
