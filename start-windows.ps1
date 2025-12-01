@@ -130,10 +130,21 @@ try {
     Print-Header "4. Running Azure Pipelines agent..."
     
     # Run the agent
-    $cmdArgs = if ($env:CMD_ARGS) { $env:CMD_ARGS -split ' ' } else { @() }
-
-    Write-Host "Executing: .\run.cmd $cmdArgs"
-    & .\run.cmd @cmdArgs
+    # Pass CMD_ARGS directly to run.cmd similar to how the Linux version does it
+    if ($env:CMD_ARGS) {
+        Write-Host "Executing: .\run.cmd $env:CMD_ARGS"
+        $process = Start-Process -FilePath ".\run.cmd" -ArgumentList $env:CMD_ARGS -Wait -NoNewWindow -PassThru
+        $exitCode = $process.ExitCode
+    } else {
+        Write-Host "Executing: .\run.cmd"
+        $process = Start-Process -FilePath ".\run.cmd" -Wait -NoNewWindow -PassThru
+        $exitCode = $process.ExitCode
+    }
+    
+    if ($exitCode -ne 0) {
+        Write-Error "Agent execution failed with exit code $exitCode"
+        exit $exitCode
+    }
     
 } finally {
     & $cleanup
