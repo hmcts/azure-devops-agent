@@ -1,0 +1,54 @@
+# syntax=docker/dockerfile:1
+FROM mcr.microsoft.com/windows/server:ltsc2022-amd64
+
+# To make it easier for build and release pipelines to run,
+# configure PowerShell execution policy
+RUN powershell -Command Set-ExecutionPolicy Bypass -Scope Process -Force
+
+# Install Chocolatey package manager with optimizations
+RUN powershell -Command " \
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; \
+    iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1')); \
+    choco feature enable -n allowGlobalConfirmation; \
+    choco feature enable -n useRememberedArgumentsForUpgrades"
+
+# Install essential tools and Java in a single layer to improve caching
+# Group related packages together to reduce layers and enable parallel downloads
+RUN choco install -y --no-progress --limit-output \
+    git \
+    curl \
+    jq \
+    azure-cli \
+    unzip \
+    zip \
+    openjdk11 \
+    openjdk17 \
+    nuget.commandline
+
+# Install Node.js with specific version in separate command to avoid version conflict
+RUN choco install -y --no-progress --limit-output nodejs --version=20.11.0
+
+# Enable corepack for yarn (separate layer as it's quick and uses npm)
+RUN corepack enable && corepack prepare yarn@stable --activate
+
+# Install .NET Framework 4.8 Developer Pack in separate layer (large download)
+RUN choco install -y --no-progress netfx-4.8-devpack
+
+# Install Visual Studio Build Tools 2022 in separate layer (largest/slowest installation)
+# Using --no-progress to speed up
+RUN choco install -y --no-progress visualstudio2022buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.ManagedDesktopBuildTools --add Microsoft.VisualStudio.Workload.NetCoreBuildTools --includeRecommended --quiet --wait --norestart"
+
+# Set Java environment variables
+ENV JAVA_HOME_11_X64="C:\Program Files\OpenJDK\jdk-11" \
+    JAVA_HOME_17_X64="C:\Program Files\OpenJDK\jdk-17" \
+    JAVA_HOME="C:\Program Files\OpenJDK\jdk-11" \
+    JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF8
+
+# Note: Docker is typically accessed from the host when running Windows containers.
+# If Docker in Docker is required, mount the Docker socket from the host.
+
+WORKDIR C:/azp
+
+COPY ./start-windows.ps1 ./start.ps1
+
+CMD ["powershell", "-File", ".\\start.ps1"]
