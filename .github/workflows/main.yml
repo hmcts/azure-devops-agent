@@ -68,5 +68,5 @@ jobs:
       - name: Build and push prod image
         run: |
           docker build -f Dockerfile.windows -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/azure-devops-agent-windows:prod-${{ steps.prep.outputs.BUILD_ID }} .
-          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/azure-devops-agent-windows:prod-${{github.event.number}}-${{ steps.prep.outputs.BUILD_ID }}
+          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/azure-devops-agent-windows:prod-${{ steps.prep.outputs.BUILD_ID }}
         if: github.ref == 'refs/heads/main'
