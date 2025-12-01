@@ -93,9 +93,33 @@ try {
 Print-Header "2. Downloading and extracting Azure Pipelines agent..."
 
 $agentZip = "C:\azp\agent.zip"
+
+Write-Host "Starting agent download at $(Get-Date -Format 'HH:mm:ss')" -ForegroundColor Yellow
+Write-Host "Download URL: $packageUrl"
+$downloadStart = Get-Date
+
 Invoke-WebRequest -Uri $packageUrl -OutFile $agentZip
+
+$downloadEnd = Get-Date
+$downloadDuration = ($downloadEnd - $downloadStart).TotalSeconds
+Write-Host "Download completed in $([math]::Round($downloadDuration, 2)) seconds" -ForegroundColor Green
+
+$zipSize = (Get-Item $agentZip).Length / 1MB
+Write-Host "Downloaded agent package size: $([math]::Round($zipSize, 2)) MB"
+
+Write-Host "Starting extraction at $(Get-Date -Format 'HH:mm:ss')" -ForegroundColor Yellow
+$extractStart = Get-Date
+
 Expand-Archive -Path $agentZip -DestinationPath "C:\azp\agent" -Force
+
+$extractEnd = Get-Date
+$extractDuration = ($extractEnd - $extractStart).TotalSeconds
+Write-Host "Extraction completed in $([math]::Round($extractDuration, 2)) seconds" -ForegroundColor Green
+
 Remove-Item $agentZip
+
+$totalDuration = ($extractEnd - $downloadStart).TotalSeconds
+Write-Host "Total download and extraction time: $([math]::Round($totalDuration, 2)) seconds" -ForegroundColor Cyan
 
 Set-Location "C:\azp\agent"
 
