@@ -98,7 +98,11 @@ Write-Host "Starting agent download at $(Get-Date -Format 'HH:mm:ss')" -Foregrou
 Write-Host "Download URL: $packageUrl"
 $downloadStart = Get-Date
 
+# Disable progress bar to significantly improve download speed
+# The progress bar causes Invoke-WebRequest to be extremely slow (can take 500s instead of 5s)
+$ProgressPreference = 'SilentlyContinue'
 Invoke-WebRequest -Uri $packageUrl -OutFile $agentZip
+$ProgressPreference = 'Continue'
 
 $downloadEnd = Get-Date
 $downloadDuration = ($downloadEnd - $downloadStart).TotalSeconds
