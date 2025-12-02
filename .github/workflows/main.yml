@@ -17,9 +17,8 @@ jobs:
       dockerfile: Dockerfile
       platforms: linux/amd64
       image-tags: |
-        type=ref,event=branch
-        type=ref,event=pr
-        type=sha
+        type=raw,value=pr-${{github.event.number}}-{{sha}}-{{date 'X'}},enable=${{ github.event_name == 'pull_request' }}
+        type=raw,value=prod-{{sha}}-{{date 'X'}},enable=${{ github.ref == 'refs/heads/main' }}
       push: true    
     secrets:
       REGISTRY_LOGIN_SERVER: ${{ secrets.REGISTRY_LOGIN_SERVER }}
@@ -33,10 +32,10 @@ jobs:
       image-name: azure-devops-agent-windows
       dockerfile: Dockerfile.windows
       platforms: windows/amd64
+      runner: windows-2022
       image-tags: |
-        type=ref,event=branch
-        type=ref,event=pr
-        type=sha
+        type=raw,value=pr-${{github.event.number}}-{{sha}}-{{date 'X'}},enable=${{ github.event_name == 'pull_request' }}
+        type=raw,value=prod-{{sha}}-{{date 'X'}},enable=${{ github.ref == 'refs/heads/main' }}
       push: true
     secrets:
       REGISTRY_LOGIN_SERVER: ${{ secrets.REGISTRY_LOGIN_SERVER }}
