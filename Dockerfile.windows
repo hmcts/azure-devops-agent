@@ -36,7 +36,8 @@ RUN choco install -y --no-progress netfx-4.8-devpack
 
 # Install Visual Studio Build Tools 2022 in separate layer (largest/slowest installation)
 # Using --no-progress to speed up
-RUN choco install -y --no-progress visualstudio2022buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.ManagedDesktopBuildTools --add Microsoft.VisualStudio.Workload.NetCoreBuildTools --includeRecommended --quiet --wait --norestart"
+# Added Microsoft.VisualStudio.Component.TestTools.BuildTools for MSTest framework support
+RUN choco install -y --no-progress visualstudio2022buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.ManagedDesktopBuildTools --add Microsoft.VisualStudio.Workload.NetCoreBuildTools --add Microsoft.VisualStudio.Component.TestTools.BuildTools --includeRecommended --quiet --wait --norestart"
 
 # Set Java environment variables
 ENV JAVA_HOME_11_X64="C:\Program Files\OpenJDK\jdk-11" \
