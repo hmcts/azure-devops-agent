@@ -21,9 +21,21 @@ RUN choco install -y --no-progress --limit-output \
     azure-cli \
     unzip \
     zip \
+    7zip \
+    python \
     openjdk11 \
     openjdk17 \
-    nuget.commandline
+    nuget.commandline \
+    powershell-core \
+    docker-cli \
+    kubernetes-helm \
+    kubernetes-cli \
+    terraform \
+    bicep \
+    cmake \
+    gitversion.portable \
+    maven \
+    gradle
 
 # Install Node.js with specific version in separate command to avoid version conflict
 RUN choco install -y --no-progress --limit-output nodejs --version=20.11.0
@@ -34,10 +46,14 @@ RUN corepack enable && corepack prepare yarn@stable --activate
 # Install .NET Framework 4.8 Developer Pack in separate layer (large download)
 RUN choco install -y --no-progress netfx-4.8-devpack
 
+# Install SQL Server tools for database deployments
+RUN choco install -y --no-progress sqlpackage
+
 # Install Visual Studio Build Tools 2022 in separate layer (largest/slowest installation)
 # Using --no-progress to speed up
 # Added Microsoft.VisualStudio.Component.TestTools.BuildTools for MSTest framework support
-RUN choco install -y --no-progress visualstudio2022buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.ManagedDesktopBuildTools --add Microsoft.VisualStudio.Workload.NetCoreBuildTools --add Microsoft.VisualStudio.Component.TestTools.BuildTools --includeRecommended --quiet --wait --norestart"
+# Added Microsoft.VisualStudio.Workload.WebBuildTools for ASP.NET web application build support
+RUN choco install -y --no-progress visualstudio2022buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.ManagedDesktopBuildTools --add Microsoft.VisualStudio.Workload.NetCoreBuildTools --add Microsoft.VisualStudio.Workload.WebBuildTools --add Microsoft.VisualStudio.Component.TestTools.BuildTools --includeRecommended --quiet --wait --norestart"
 
 # Set Java environment variables
 ENV JAVA_HOME_11_X64="C:\Program Files\OpenJDK\jdk-11" \
