@@ -11,7 +11,7 @@ name: Publish
 jobs:
   build-and-deploy-linux:
     name: Build and push Linux container
-    uses: hmcts/cnp-githubactions-library/workflows/container-build-and-push.yaml@main
+    uses: hmcts/cnp-githubactions-library/.github/workflows/container-build-and-push.yaml@main
     with:
       image-name: azure-devops-agent
       dockerfile: Dockerfile
