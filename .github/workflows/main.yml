@@ -26,18 +26,33 @@ jobs:
       REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
 
   build-and-deploy-windows:
-    name: Build and push Windows container
-    uses: hmcts/.github/.github/workflows/container-build-and-push.yaml@feat/docker-reusable-workflow
-    with:
-      image-name: azure-devops-agent-windows
-      dockerfile: Dockerfile.windows
-      platforms: windows/amd64
-      runner: windows-2022
-      image-tags: |
-        type=raw,value=pr-${{github.event.number}}-{{sha}}-{{date 'X'}},enable=${{ github.event_name == 'pull_request' }}
-        type=raw,value=prod-{{sha}}-{{date 'X'}},enable=${{ github.ref == 'refs/heads/main' }}
-      push: true
-    secrets:
-      REGISTRY_LOGIN_SERVER: ${{ secrets.REGISTRY_LOGIN_SERVER }}
-      REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
-      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+    runs-on: windows-2022
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Generate build ID
+        id: prep
+        run: |
+          $sha = "${{ github.sha }}".Substring(0, 8)
+          $ts = [int][double]::Parse((Get-Date -UFormat %s))
+          echo "::set-output name=BUILD_ID::${sha}-${ts}"
+
+      - name: 'Build and push Windows image'
+        uses: azure/docker-login@v2
+        with:
+          login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+      - name: Build and push PR image
+        run: |
+          docker build -f Dockerfile.windows -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/azure-devops-agent-windows:pr-${{github.event.number}}-${{ steps.prep.outputs.BUILD_ID }} .
+          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/azure-devops-agent-windows:pr-${{github.event.number}}-${{ steps.prep.outputs.BUILD_ID }}
+        if: startsWith(github.ref, 'refs/pull')
+      - name: Build and push prod image
+        run: |
+          docker build -f Dockerfile.windows -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/azure-devops-agent-windows:prod-${{ steps.prep.outputs.BUILD_ID }} .
+          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/azure-devops-agent-windows:prod-${{ steps.prep.outputs.BUILD_ID }}
+        if: github.ref == 'refs/heads/main'
