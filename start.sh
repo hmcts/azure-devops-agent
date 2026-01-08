@@ -2,7 +2,9 @@
 set -e
 
 # Start Docker daemon
-dockerd > /var/log/dockerd.log 2>&1 &
+until docker info >/dev/null 2>&1; do
+  sleep 1
+done
 
 az login --federated-token "$(cat  $AZURE_FEDERATED_TOKEN_FILE)" --service-principal -u $AZURE_CLIENT_ID -t $AZURE_TENANT_ID
 
