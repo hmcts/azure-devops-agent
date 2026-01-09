@@ -68,7 +68,7 @@ RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - > /d
 
 # Create docker group and set socket permissions
 RUN groupadd -r -f docker || true
-RUN mkdir -p /run/docker && chown -R root:docker /run/docker && chmod 777 /run/docker
+RUN mkdir -p /run/docker && chown -R root:docker /run/docker && chmod 770 /run/docker
 
 # Install SQLPackage
 ARG SQLPACKAGE_URL=https://go.microsoft.com/fwlink/?linkid=2316311
