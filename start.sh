@@ -2,10 +2,22 @@
 set -e
 
 # Start Docker daemon
-dockerd > /var/log/dockerd.log 2>&1 &
+mkdir -p /var/run/docker
+dockerd --host=unix:///var/run/docker.sock > /var/log/dockerd.log 2>&1 &
+DOCKER_PID=$!
 
+# Wait for Docker daemon to be ready with timeout
+max_attempts=30
+attempt=0
 until docker info >/dev/null 2>&1; do
+  if [ $attempt -ge $max_attempts ]; then
+    echo 1>&2 "error: Docker daemon failed to start"
+    cat /var/log/dockerd.log >&2
+    kill $DOCKER_PID 2>/dev/null || true
+    exit 1
+  fi
   sleep 1
+  attempt=$((attempt + 1))
 done
 
 az login --federated-token "$(cat  $AZURE_FEDERATED_TOKEN_FILE)" --service-principal -u $AZURE_CLIENT_ID -t $AZURE_TENANT_ID
