@@ -64,7 +64,11 @@ ENV JAVA_HOME_11_X64=/usr/lib/jvm/java-11-openjdk-amd64 \
 RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - > /dev/null \
   && add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
   && apt-get update \
-  && apt-get install -y docker-ce
+  && apt-get install -y docker-ce docker-ce-cli containerd.io
+
+# Create docker group and set socket permissions
+RUN groupadd -r -f docker || true
+RUN mkdir -p /run/docker && chown -R root:docker /run/docker && chmod 770 /run/docker
 
 # Install SQLPackage
 ARG SQLPACKAGE_URL=https://go.microsoft.com/fwlink/?linkid=2316311
