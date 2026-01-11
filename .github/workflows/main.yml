@@ -10,34 +10,20 @@ name: Publish
 
 jobs:
   build-and-deploy-linux:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Generate build ID
-        id: prep
-        run: |
-          sha=${GITHUB_SHA::8}
-          ts=$(date +%s)
-          echo "::set-output name=BUILD_ID::${sha}-${ts}"
-
-      - name: 'Build and push Linux image'
-        uses: azure/docker-login@v2
-        with:
-          login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
-      - run: |
-          docker build -f Dockerfile -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/azure-devops-agent:pr-${{github.event.number}}-${{ steps.prep.outputs.BUILD_ID }} .
-          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/azure-devops-agent:pr-${{github.event.number}}-${{ steps.prep.outputs.BUILD_ID }}
-        if: startsWith(github.ref, 'refs/pull')
-      - run: |
-          docker build -f Dockerfile -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/azure-devops-agent:prod-${{ steps.prep.outputs.BUILD_ID }} .
-          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/azure-devops-agent:prod-${{ steps.prep.outputs.BUILD_ID }}
-        if: github.ref == 'refs/heads/main'
+    name: Build and push Linux container
+    uses: hmcts/cnp-githubactions-library/.github/workflows/container-build-and-push.yaml@main
+    with:
+      image-name: ${{github.event.repository.name}}
+      dockerfile: Dockerfile
+      platforms: linux/amd64
+      image-tags: |
+        type=raw,value=pr-${{github.event.number}}-{{sha}}-{{date 'X'}},enable=${{ github.event_name == 'pull_request' }}
+        type=raw,value=prod-{{sha}}-{{date 'X'}},enable=${{ github.ref == 'refs/heads/main' }}
+      push: true    
+    secrets:
+      REGISTRY_LOGIN_SERVER: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+      REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
 
   build-and-deploy-windows:
     runs-on: windows-2022
