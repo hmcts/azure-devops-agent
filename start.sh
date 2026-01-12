@@ -1,11 +1,6 @@
 #!/bin/bash
 set -e
 
-# Start Docker daemon
-until docker info >/dev/null 2>&1; do
-  sleep 1
-done
-
 az login --federated-token "$(cat  $AZURE_FEDERATED_TOKEN_FILE)" --service-principal -u $AZURE_CLIENT_ID -t $AZURE_TENANT_ID
 
 TOKEN=$(az account get-access-token --resource 499b84ac-1321-427f-aa17-267ca6975798 --query accessToken -o tsv)
