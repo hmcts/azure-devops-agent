@@ -1,9 +1,29 @@
 #!/bin/bash
 set -e
 
+# setup Debian to use the legacy iptables
+sudo update-alternatives --set iptables /usr/sbin/iptables-legacy
+sudo update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
+sudo update-alternatives --set arptables /usr/sbin/arptables-legacy
+sudo update-alternatives --set ebtables /usr/sbin/ebtables-legacy
+
 # Start Docker daemon
+mkdir -p /var/run/docker
+dockerd --host=unix:///var/run/docker.sock > /var/log/dockerd.log 2>&1 &
+DOCKER_PID=$!
+
+# Wait for Docker daemon to be ready with timeout
+max_attempts=30
+attempt=0
 until docker info >/dev/null 2>&1; do
+  if [ $attempt -ge $max_attempts ]; then
+    echo 1>&2 "error: Docker daemon failed to start"
+    cat /var/log/dockerd.log >&2
+    kill $DOCKER_PID 2>/dev/null || true
+    exit 1
+  fi
   sleep 1
+  attempt=$((attempt + 1))
 done
 
 az login --federated-token "$(cat  $AZURE_FEDERATED_TOKEN_FILE)" --service-principal -u $AZURE_CLIENT_ID -t $AZURE_TENANT_ID
