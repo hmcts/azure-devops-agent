@@ -2,15 +2,9 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'main/**'
-      - '.github/workflows/main.yml'
   pull_request:
     branches:
       - main
-    paths:
-      - 'main/**'
-      - '.github/workflows/main.yml'
 
 name: Publish
 
@@ -52,9 +46,8 @@ jobs:
       - name: 'Build and push prod image to HMCTSPROD'
         if: github.ref == 'refs/heads/main'
         run: |
-          docker build -f Dockerfile -t hmctsprod.azurecr.io/azure-devops-agent:prod-${{ steps.prep.outputs.BUILD_ID }} -t hmctsprod.azurecr.io/azure-devops-agent:latest .
+          docker build -f Dockerfile -t hmctsprod.azurecr.io/azure-devops-agent:prod-${{ steps.prep.outputs.BUILD_ID }} .
           docker push hmctsprod.azurecr.io/azure-devops-agent:prod-${{ steps.prep.outputs.BUILD_ID }}
-          docker push hmctsprod.azurecr.io/azure-devops-agent:latest
 
       # HMCTSPUBLIC ACR - to be deprecated post migration to hmctsprod
 
@@ -110,9 +103,8 @@ jobs:
       - name: 'Build and push prod image to HMCTSPROD'
         if: github.ref == 'refs/heads/main'
         run: |
-          docker build -f Dockerfile.windows -t hmctsprod.azurecr.io/azure-devops-agent-windows:prod-${{ steps.prep.outputs.BUILD_ID }} -t hmctsprod.azurecr.io/azure-devops-agent-windows:latest .
+          docker build -f Dockerfile.windows -t hmctsprod.azurecr.io/azure-devops-agent-windows:prod-${{ steps.prep.outputs.BUILD_ID }} .
           docker push hmctsprod.azurecr.io/azure-devops-agent-windows:prod-${{ steps.prep.outputs.BUILD_ID }}
-          docker push hmctsprod.azurecr.io/azure-devops-agent-windows:latest
 
       # HMCTSPUBLIC ACR - to be deprecated post migration to hmctsprod
 
