@@ -1,8 +1,8 @@
 on:
-  pull_request:
+  push:
     branches:
       - main
-  push:
+  pull_request:
     branches:
       - main
 
@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write
 
     steps:
       - uses: actions/checkout@v5
@@ -22,7 +23,33 @@ jobs:
         run: |
           sha=${GITHUB_SHA::8}
           ts=$(date +%s)
-          echo "::set-output name=BUILD_ID::${sha}-${ts}"
+          echo "BUILD_ID=${sha}-${ts}" >> $GITHUB_OUTPUT
+
+      - name: 'Az CLI login'
+        uses: azure/login@v2
+        with:
+          client-id: b354d443-d632-4d61-8ee8-2abc2c7baf23 # DTS Shared GitHub Actions ACR Publisher 1
+          tenant-id: 531ff96d-0ae9-462a-8d2d-bec7c0b42082 # HMCTS.NET
+          allow-no-subscriptions: true
+
+      - name: 'ACR Login'
+        run: |
+          az acr login --name hmctsprod
+
+      # HMCTSPROD ACR
+      - name: 'Build and push PR image to HMCTSPROD'
+        if: startsWith(github.ref, 'refs/pull')
+        run: |
+          docker build -f Dockerfile -t hmctsprod.azurecr.io/azure-devops-agent:pr-${{github.event.number}}-${{ steps.prep.outputs.BUILD_ID }} .
+          docker push hmctsprod.azurecr.io/azure-devops-agent:pr-${{github.event.number}}-${{ steps.prep.outputs.BUILD_ID }}
+
+      - name: 'Build and push prod image to HMCTSPROD'
+        if: github.ref == 'refs/heads/main'
+        run: |
+          docker build -f Dockerfile -t hmctsprod.azurecr.io/azure-devops-agent:prod-${{ steps.prep.outputs.BUILD_ID }} .
+          docker push hmctsprod.azurecr.io/azure-devops-agent:prod-${{ steps.prep.outputs.BUILD_ID }}
+
+      # HMCTSPUBLIC ACR - to be deprecated post migration to hmctsprod
 
       - name: 'Build and push Linux image'
         uses: azure/docker-login@v2
@@ -43,6 +70,7 @@ jobs:
     runs-on: windows-2022
     permissions:
       contents: read
+      id-token: write
 
     steps:
       - uses: actions/checkout@v5
@@ -52,7 +80,33 @@ jobs:
         run: |
           $sha = "${{ github.sha }}".Substring(0, 8)
           $ts = [int][double]::Parse((Get-Date -UFormat %s))
-          echo "::set-output name=BUILD_ID::${sha}-${ts}"
+          echo "BUILD_ID=${sha}-${ts}" >> $env:GITHUB_OUTPUT
+
+      - name: 'Az CLI login'
+        uses: azure/login@v2
+        with:
+          client-id: b354d443-d632-4d61-8ee8-2abc2c7baf23 # DTS Shared GitHub Actions ACR Publisher 1
+          tenant-id: 531ff96d-0ae9-462a-8d2d-bec7c0b42082 # HMCTS.NET
+          allow-no-subscriptions: true
+
+      - name: 'ACR Login'
+        run: |
+          az acr login --name hmctsprod
+
+      # HMCTSPROD ACR
+      - name: 'Build and push PR image to HMCTSPROD'
+        if: startsWith(github.ref, 'refs/pull')
+        run: |
+          docker build -f Dockerfile.windows -t hmctsprod.azurecr.io/azure-devops-agent-windows:pr-${{github.event.number}}-${{ steps.prep.outputs.BUILD_ID }} .
+          docker push hmctsprod.azurecr.io/azure-devops-agent-windows:pr-${{github.event.number}}-${{ steps.prep.outputs.BUILD_ID }}
+
+      - name: 'Build and push prod image to HMCTSPROD'
+        if: github.ref == 'refs/heads/main'
+        run: |
+          docker build -f Dockerfile.windows -t hmctsprod.azurecr.io/azure-devops-agent-windows:prod-${{ steps.prep.outputs.BUILD_ID }} .
+          docker push hmctsprod.azurecr.io/azure-devops-agent-windows:prod-${{ steps.prep.outputs.BUILD_ID }}
+
+      # HMCTSPUBLIC ACR - to be deprecated post migration to hmctsprod
 
       - name: 'Build and push Windows image'
         uses: azure/docker-login@v2
