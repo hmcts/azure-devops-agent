@@ -67,7 +67,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
 
   build-and-deploy-windows:
-    runs-on: windows-2022
+    runs-on: windows-2025
     permissions:
       contents: read
       id-token: write
