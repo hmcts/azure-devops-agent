@@ -79,8 +79,16 @@ RUN powershell -Command " \
     nuget install MSTest.TestAdapter -Version 3.1.1 -OutputDirectory C:\MSTest; \
     Write-Host 'MSTest v2 installed successfully'"
 
+# Install Entity Framework 6 command-line tools for migrations
+RUN powershell -Command " \
+    nuget install EntityFramework -Version 6.5.1 -OutputDirectory C:\EF6; \
+    Write-Host 'Entity Framework 6 installed successfully'"
+
 # Set environment variable to help MSBuild find MSTest assemblies
 ENV MSTEST_PATH="C:\MSTest"
+
+# Add EF6 to PATH so ef6.exe is available for running migrations
+ENV PATH="C:\EF6\EntityFramework.6.5.1\tools;${PATH}"
 
 # Set Java environment variables
 ENV JAVA_HOME_11_X64="C:\Program Files\OpenJDK\jdk-11" \
