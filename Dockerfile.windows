@@ -82,13 +82,18 @@ RUN powershell -Command " \
 # Install Entity Framework 6 command-line tools for migrations
 RUN powershell -Command " \
     nuget install EntityFramework -Version 6.5.1 -OutputDirectory C:\EF6; \
-    Write-Host 'Entity Framework 6 installed successfully'"
+    $ef6ToolsPath = Get-ChildItem -Path C:\EF6 -Recurse -Filter ef6.exe | Select-Object -First 1 -ExpandProperty DirectoryName; \
+    if ($ef6ToolsPath) { \
+        [System.Environment]::SetEnvironmentVariable('EF6_TOOLS_PATH', $ef6ToolsPath, [System.EnvironmentVariableTarget]::Machine); \
+        $path = [System.Environment]::GetEnvironmentVariable('PATH', [System.EnvironmentVariableTarget]::Machine); \
+        [System.Environment]::SetEnvironmentVariable('PATH', $ef6ToolsPath + ';' + $path, [System.EnvironmentVariableTarget]::Machine); \
+        Write-Host 'Entity Framework 6 installed successfully at' $ef6ToolsPath; \
+    } else { \
+        Write-Host 'Warning: ef6.exe not found after installation'; \
+    }"
 
 # Set environment variable to help MSBuild find MSTest assemblies
 ENV MSTEST_PATH="C:\MSTest"
-
-# Add EF6 to PATH so ef6.exe is available for running migrations
-ENV PATH="C:\EF6\EntityFramework.6.5.1\tools;${PATH}"
 
 # Set Java environment variables
 ENV JAVA_HOME_11_X64="C:\Program Files\OpenJDK\jdk-11" \
