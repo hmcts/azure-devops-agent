@@ -32,7 +32,9 @@ RUN apt-get update \
         python3-requests \
         python3-packaging \
         bsdmainutils \
-        gnupg2
+        gnupg2 \
+        redis
+
 
 RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
 
