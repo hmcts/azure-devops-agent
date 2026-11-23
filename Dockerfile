@@ -27,6 +27,8 @@ RUN apt-get update \
         gnupg \
         postgresql-client \
         swaks \
+        libnet-ssleay-perl \
+        libio-socket-ssl-perl \
         python3-pip \
         python3-venv \
         python3-requests \
